@@ -215,7 +215,7 @@ public class Main {
         }
 
         configureLogging();
-
+        //创建客户端模型
         PaiCliConfig config = PaiCliConfig.load();
         LlmClient llmClient = LlmClientFactory.createFromConfig(config);
         if (llmClient == null) {
