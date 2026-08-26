@@ -76,7 +76,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -201,7 +200,6 @@ public class Main {
 
     public static void main(String[] args) {
         configureAwtForCli();
-        configureConsoleEncoding();
         if (WechatCommandMain.isWechatCommand(args)) {
             configureLogging();
             int code = WechatCommandMain.run(args);
@@ -227,7 +225,7 @@ public class Main {
         }
         AtomicReference<LlmClient> llmClientRef = new AtomicReference<>(llmClient);
 
-        try (Terminal terminal = createTerminal()) {
+        try (Terminal terminal = TerminalBuilder.builder().system(true).dumb(true).build()) {
             refreshTerminalColumns(terminal);
             TerminalHitlHandler terminalHitlHandler = new TerminalHitlHandler(false);
             SwitchableHitlHandler hitlHandler = new SwitchableHitlHandler(terminalHitlHandler);
@@ -853,31 +851,6 @@ public class Main {
         } catch (IOException e) {
             System.err.println("❌ 终端初始化失败: " + e.getMessage());
             System.exit(1);
-        }
-    }
-
-    static void configureConsoleEncoding() {
-        System.setProperty("file.encoding", StandardCharsets.UTF_8.name());
-        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
-        System.setErr(new PrintStream(System.err, true, StandardCharsets.UTF_8));
-    }
-
-    static Terminal createTerminal() throws IOException {
-        TerminalBuilder builder = TerminalBuilder.builder()
-                .system(true)
-                .stdinEncoding(StandardCharsets.UTF_8)
-                .stdoutEncoding(StandardCharsets.UTF_8)
-                .stderrEncoding(StandardCharsets.UTF_8);
-        try {
-            return builder.build();
-        } catch (IOException | RuntimeException firstFailure) {
-            return TerminalBuilder.builder()
-                    .system(true)
-                    .dumb(true)
-                    .stdinEncoding(StandardCharsets.UTF_8)
-                    .stdoutEncoding(StandardCharsets.UTF_8)
-                    .stderrEncoding(StandardCharsets.UTF_8)
-                    .build();
         }
     }
 
