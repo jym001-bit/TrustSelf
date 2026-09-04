@@ -44,6 +44,7 @@ public final class SkillContextBuffer {
         if (entries.isEmpty()) {
             return "";
         }
+        //复制出来当前skill的内容
         List<Map.Entry<String, String>> snapshot = new ArrayList<>(entries.entrySet());
         entries.clear();
 

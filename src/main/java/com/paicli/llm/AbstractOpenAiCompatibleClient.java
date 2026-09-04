@@ -54,34 +54,37 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
     public ChatResponse chat(List<Message> messages, List<Tool> tools) throws IOException {
         return chat(messages, tools, StreamListener.NO_OP);
     }
-
+    //向大模型发送请求的地方
     @Override
-    public ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener) throws IOException {
+    public  ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener) throws IOException {
         StreamListener streamListener = listener == null ? StreamListener.NO_OP : listener;
         RequestBody body = RequestBody.create(
                 buildRequestBody(messages, tools).toString(),
                 MediaType.parse("application/json")
         );
-
+        //请求构造器
         Request.Builder request = new Request.Builder()
                 .url(getApiUrl())
                 .header("Authorization", "Bearer " + getApiKey())
                 .header("Content-Type", "application/json")
                 .post(body);
+        //拓展点
         customizeRequest(request);
+        //变成Request 对象
         Request builtRequest = request.build();
 
         try (Response response = httpClient().newCall(builtRequest).execute()) {
-            ResponseBody responseBodyObj = response.body();
+            ResponseBody responseBodyObj = response.body();//获取响应体
             if (!response.isSuccessful()) {
                 String errorBody = responseBodyObj != null ? responseBodyObj.string() : "无响应体";
-                throw new IOException("API请求失败: " + response.code() + " - " + errorBody);
+                throw new IOException("API请求失败: " + response.code() + " - " + errorBody);//状态码
             }
             if (responseBodyObj == null) {
                 throw new IOException("API返回空响应体");
             }
-
+            //大模型回复流式获取
             BufferedSource source = responseBodyObj.source();
+            //初始化信息
             String role = "assistant";
             StringBuilder content = new StringBuilder();
             StringBuilder reasoning = new StringBuilder();
@@ -100,11 +103,12 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
                 if (trimmed.isEmpty() || !trimmed.startsWith("data:")) {
                     continue;
                 }
-
+                //获取当前payload
                 String payload = trimmed.substring("data:".length()).trim();
                 if (payload.isEmpty()) {
                     continue;
                 }
+                //流式返回最后
                 if ("[DONE]".equals(payload)) {
                     break;
                 }
@@ -114,13 +118,14 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
                 if (!error.isMissingNode() && !error.isNull()) {
                     throw new IOException("API请求失败: " + formatStreamingError(error));
                 }
+                //获取用量
                 JsonNode usage = root.path("usage");
                 if (!usage.isMissingNode()) {
-                    inputTokens = usage.path("prompt_tokens").asInt(inputTokens);
-                    outputTokens = usage.path("completion_tokens").asInt(outputTokens);
+                    inputTokens = usage.path("prompt_tokens").asInt(inputTokens);//sys 上下文 问题 rag检索 工具定义
+                    outputTokens = usage.path("completion_tokens").asInt(outputTokens);//llm输出答案 工具调用
                     cachedInputTokens = parseCachedInputTokens(usage, cachedInputTokens);
                 }
-
+                //json格式最外层
                 JsonNode choices = root.path("choices");
                 if (!choices.isArray() || choices.isEmpty()) {
                     continue;
@@ -139,19 +144,19 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
                 if (!deltaRole.isEmpty()) {
                     role = deltaRole;
                 }
-
+                //思考细节
                 String reasoningDelta = extractReasoningDelta(delta);
                 if (!reasoningDelta.isEmpty()) {
                     reasoning.append(reasoningDelta);
                     streamListener.onReasoningDelta(reasoningDelta);
                 }
-
+                //追加llm回复内容
                 String contentDelta = delta.path("content").asText("");
                 if (!contentDelta.isEmpty()) {
                     content.append(contentDelta);
                     streamListener.onContentDelta(contentDelta);
                 }
-
+                //合并工具
                 mergeToolCallDeltas(toolAccumulators, delta.path("tool_calls"));
             }
 

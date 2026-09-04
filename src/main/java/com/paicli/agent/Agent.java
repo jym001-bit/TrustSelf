@@ -126,7 +126,7 @@ public class Agent {
      */
     public String run(String userInput) {
         log.info("ReAct run started: inputLength={}", userInput == null ? 0 : userInput.length());
-        pruneHistoricalImagePayloads();
+        pruneHistoricalImagePayloads();//删除历史上下文的图片
         // 存入短期记忆
         memoryManager.addUserMessage(userInput);
         storeExplicitBrowserMemoryHint(userInput);
@@ -138,10 +138,13 @@ public class Agent {
 
         // 添加用户输入到历史（如有 skill body 注入，前置到原文之前）
         String userMessageContent = prependSkillBodies(userInput);
+        //添加skill的文章内容，带有图片的路径的话，图片解析发给LLM
         conversationHistory.add(ImageReferenceParser.userMessage(
                 userMessageContent,
                 Path.of(toolRegistry.getProjectPath())));
+        //字符串拼接器
         StringBuilder reasoningTranscript = new StringBuilder();
+        //流式显示
         StreamRenderer streamRenderer = new StreamRenderer(renderer());
 
         long startNanos = System.nanoTime();
@@ -342,7 +345,7 @@ public class Agent {
             if (images <= 0) {
                 continue;
             }
-            conversationHistory.set(i, message.withoutImageContent());
+            conversationHistory.set(i, message.withoutImageContent());//删除历史消息的图片base64
             messageCount++;
             imageCount += images;
         }

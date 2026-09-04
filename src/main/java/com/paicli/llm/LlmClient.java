@@ -35,8 +35,9 @@ public interface LlmClient {
     default String promptCacheMode() {
         return "none";
     }
-
+    //静态工厂
     record ContentPart(String type, String text, String imageBase64, String imageUrl, String mimeType) {
+
         public static ContentPart text(String text) {
             return new ContentPart("text", text, null, null, null);
         }
