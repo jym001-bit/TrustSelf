@@ -13,12 +13,14 @@ import java.util.List;
  * 解压策略：通过 .version 文件标记当前 jar 内置版本。版本一致跳过；不一致或缺失则覆盖整个目录。
  *
  * 内置 skill 文件清单为硬编码（避免 jar 内 resource walk 的跨平台问题），
- * 当前覆盖：web-access skill 的 SKILL.md / cdp-cheatsheet.md / 6 个 site-patterns。
+ * 当前覆盖：
+ *   - web-access：SKILL.md / cdp-cheatsheet.md / 6 个 site-patterns
+ *   - frontend-design（Anthropic 官方 anthropics/skills，Apache-2.0）：SKILL.md / LICENSE.txt
  */
 public final class SkillBuiltinExtractor {
 
-    /** 当 web-access 内容有破坏性更新时上调，触发缓存重建。 */
-    public static final String CURRENT_VERSION = "1.0.0";
+    /** 内置 skill 内容有破坏性更新时上调，触发缓存重建。 */
+    public static final String CURRENT_VERSION = "1.1.0";
 
     private static final List<BuiltinSkillSpec> BUILTIN_SKILLS = List.of(
             new BuiltinSkillSpec("web-access", List.of(
@@ -30,6 +32,10 @@ public final class SkillBuiltinExtractor {
                     "references/site-patterns/x.com.md",
                     "references/site-patterns/xiaohongshu.com.md",
                     "references/site-patterns/zhuanlan.zhihu.com.md"
+            )),
+            new BuiltinSkillSpec("frontend-design", List.of(
+                    "SKILL.md",
+                    "LICENSE.txt"
             ))
     );
 
