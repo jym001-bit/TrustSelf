@@ -36,9 +36,8 @@ class InlineActivityDisplayTest {
         }
 
         String output = terminalSink.toString(StandardCharsets.UTF_8);
-        assertFalse(output.contains("PaiCLI"), "thinking panel should not duplicate status bar: " + output);
+        assertFalse(output.contains("Simple CLI"), "thinking panel should not duplicate status bar: " + output);
         assertFalse(output.contains("glm-5.1"), "thinking panel should not duplicate model status: " + output);
-        assertFalse(output.contains("Auto Model"), "thinking panel should not duplicate footer cue: " + output);
         assertTrue(output.contains("Thinking"), "thinking panel should keep the spinner label: " + output);
         assertTrue(output.contains("Thinking... (esc to cancel,"),
                 "thinking panel should keep a stable label and move the animation to the spinner: " + output);
@@ -58,7 +57,7 @@ class InlineActivityDisplayTest {
         }
 
         String output = terminalSink.toString(StandardCharsets.UTF_8);
-        assertFalse(output.contains("PaiCLI"),
+        assertFalse(output.contains("Simple CLI"),
                 "without a status bar the activity panel should not invent a status row: " + output);
         assertTrue(output.contains("Thinking"), output);
     }
@@ -80,7 +79,7 @@ class InlineActivityDisplayTest {
             terminal.writer().flush();
         }
         String output = terminalSink.toString(StandardCharsets.UTF_8);
-        assertFalse(output.contains("PaiCLI"),
+        assertFalse(output.contains("Simple CLI"),
                 "idle activity display must not paint when status updates: " + output);
     }
 

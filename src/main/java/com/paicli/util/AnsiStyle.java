@@ -36,6 +36,11 @@ public final class AnsiStyle {
         return wrap(DIM + GRAY, text);
     }
 
+    /** 次级信息保持柔和，但不使用 DIM，避免深色终端上对比度过低。 */
+    public static String secondary(String text) {
+        return wrap(GRAY, text);
+    }
+
     public static String thinking(String text) {
         return wrap(ITALIC + GRAY, text);
     }

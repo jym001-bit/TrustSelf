@@ -148,6 +148,7 @@ public class Agent {
         StreamRenderer streamRenderer = new StreamRenderer(renderer());
 
         long startNanos = System.nanoTime();
+        //控制循环轮数
         AgentBudget budget = AgentBudget.fromLlmClient(llmClient);
         pushStatus(budget, startNanos, "running");
 

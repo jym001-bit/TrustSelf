@@ -160,7 +160,7 @@ public final class BottomStatusBar implements AutoCloseable {
     }
 
     static String formatStatusLine(StatusInfo info, int cols) {
-        String mode = info.hitlEnabled() ? "HITL Ctrl+Y for YOLO" : "YOLO Ctrl+Y to enable HITL";
+        String mode = info.hitlEnabled() ? "HITL  Ctrl+Y: YOLO" : "YOLO  Ctrl+Y: HITL";
         String right = environmentSummary(info);
         if (right.isBlank()) {
             return fitToColumns(" " + mode, cols);
@@ -172,7 +172,7 @@ public final class BottomStatusBar implements AutoCloseable {
     static String formatFooterLine(StatusInfo info, int cols) {
         String model = info.model() == null || info.model().isBlank() ? "Auto Model" : info.model().trim();
         String phase = info.phase() == null || info.phase().isBlank() ? "idle" : info.phase().trim();
-        StringBuilder sb = new StringBuilder(" Auto Model · ");
+        StringBuilder sb = new StringBuilder(" Simple CLI · ");
         sb.append(model);
         appendField(sb, phase);
         appendField(sb, contextSegment(info));
@@ -223,7 +223,7 @@ public final class BottomStatusBar implements AutoCloseable {
     }
 
     static AttributedString formatStatusLineAttributed(StatusInfo info, int cols) {
-        String mode = info.hitlEnabled() ? "HITL Ctrl+Y for YOLO" : "YOLO Ctrl+Y to enable HITL";
+        String mode = info.hitlEnabled() ? "HITL  Ctrl+Y: YOLO" : "YOLO  Ctrl+Y: HITL";
         String right = environmentSummary(info);
         AttributedStringBuilder builder = new AttributedStringBuilder(Math.max(0, cols));
         builder.append(" ", BASE_STYLE);
@@ -242,7 +242,7 @@ public final class BottomStatusBar implements AutoCloseable {
         String phase = info.phase() == null || info.phase().isBlank() ? "idle" : info.phase().trim();
         AttributedStringBuilder builder = new AttributedStringBuilder(Math.max(0, cols));
         builder.append(" ", BASE_STYLE);
-        builder.append("Auto Model", BRAND_STYLE);
+        builder.append("Simple CLI", BRAND_STYLE);
         builder.append(" · ", BASE_STYLE);
         builder.append(model, MODEL_STYLE);
         appendStyledField(builder, phase, "idle".equalsIgnoreCase(phase) ? PHASE_IDLE_STYLE : PHASE_ACTIVE_STYLE);

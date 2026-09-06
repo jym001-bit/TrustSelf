@@ -24,7 +24,7 @@ class BottomStatusBarTest {
         StatusInfo info = StatusInfo.tokens("glm-5.1", 200_000L, 1200L, 1000L, 234L, 100L, "¥0.0123",
                 true, 1500L, "running");
         String line = BottomStatusBar.formatFooterLine(info, 200);
-        assertTrue(line.contains("Auto Model"), line);
+        assertTrue(line.contains("Simple CLI"), line);
         assertTrue(line.contains("running"), line);
         assertTrue(line.contains("glm-5.1"), line);
         assertTrue(line.contains("ctx"), line);
@@ -82,7 +82,7 @@ class BottomStatusBarTest {
     void footerLineFitsColumnWidth() {
         String line = BottomStatusBar.formatFooterLine(StatusInfo.idle("glm-5.1", 200_000L, false), 40);
         assertTrue(line.length() == 40, "footer should fill requested width: " + line.length());
-        assertTrue(line.contains("Auto Model"), line);
+        assertTrue(line.contains("Simple CLI"), line);
     }
 
     @Test

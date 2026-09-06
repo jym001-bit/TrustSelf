@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class SideGitManager {
-    private static final PersonIdent SNAPSHOT_IDENT = new PersonIdent("PaiCLI Snapshot", "snapshot@paicli.local");
+    private static final PersonIdent SNAPSHOT_IDENT = new PersonIdent("Simple CLI Snapshot", "snapshot@paicli.local");
 
     private final Path projectRoot;
     private final SnapshotConfig config;
@@ -194,7 +194,7 @@ public class SideGitManager {
     private void writeExcludeFile() throws IOException {
         Path info = gitDir.resolve("info");
         Files.createDirectories(info);
-        StringBuilder sb = new StringBuilder("# Managed by PaiCLI side-history snapshots\n");
+        StringBuilder sb = new StringBuilder("# Managed by Simple CLI side-history snapshots\n");
         for (String exclude : config.excludes()) {
             sb.append(exclude).append('\n');
         }

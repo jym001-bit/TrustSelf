@@ -57,7 +57,7 @@ public final class LanternaWindow {
 
         // 创建根面板（三栏布局）
         this.rootPane = new RootPane(config, llmClient);
-        this.mainWindow = new BasicWindow("PaiCLI v16.0.0");
+        this.mainWindow = new BasicWindow("Simple CLI v16.1.0");
         mainWindow.setComponent(rootPane);
         gui.addWindow(mainWindow);
 

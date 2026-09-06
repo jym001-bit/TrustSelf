@@ -187,7 +187,7 @@ public class WechatMessageLoop {
                 return;
             }
             case MODEL -> {
-                send("`/model` 微信侧切换将在模型配置命令抽取后启用；当前使用 PaiCLI 默认模型。");
+                send("`/model` 微信侧切换将在模型配置命令抽取后启用；当前使用 Simple CLI 默认模型。");
                 drainQueue();
                 return;
             }
@@ -286,7 +286,7 @@ public class WechatMessageLoop {
 
     private static String helpText() {
         return """
-                PaiCLI 微信通道命令：
+                Simple CLI 微信通道命令：
                 /help      查看帮助
                 /status    查看状态
                 /clear     清空当前微信会话

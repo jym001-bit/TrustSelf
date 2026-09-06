@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Loads PaiCLI project memory files that are intended to be versioned and
+ * Loads Simple CLI project memory files that are intended to be versioned and
  * injected into the system prompt at session start.
  */
 public class ProjectMemoryLoader {
