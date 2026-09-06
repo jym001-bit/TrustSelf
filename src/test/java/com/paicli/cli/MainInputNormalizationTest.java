@@ -63,8 +63,7 @@ class MainInputNormalizationTest {
         assertTrue(lines.stream().anyMatch(line -> line.contains("READY")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("@path")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("press Enter")));
-        assertTrue(lines.size() <= 7, "startup screen should stay compact: " + lines);
-        assertTrue(lines.stream().noneMatch(line -> line.contains("████")));
+        assertTrue(lines.size() <= 12, "mascot and startup hints should fit comfortably on screen: " + lines);
         assertTrue(lines.stream().noneMatch(line -> line.contains("π")));
         assertTrue(lines.stream().noneMatch(line -> line.contains("for shortcuts")));
         assertTrue(lines.stream().noneMatch(line -> line.contains("────────────────")));

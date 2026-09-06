@@ -259,7 +259,12 @@ v16.1 抽出 `Renderer` 接口 + 三个实现：
 当前启动输出以命令行实际产物为准：
 
 ```text
-  Simple CLI  v16.1.0
+      ▄       ▄
+    ▄███████████▄
+    ███  ███  ███
+    █████████████    Simple CLI  v16.1.0
+      ██     ██
+
   READY  Model step-3.5-flash-2603 (step)
   MCP 4/4 · 61 tools  |  2/2 skills  |  ReAct
 
@@ -710,7 +715,12 @@ I
 ### 第三期：当前运行效果
 
 ```text
-  Simple CLI  v16.1.0
+      ▄       ▄
+    ▄███████████▄
+    ███  ███  ███
+    █████████████    Simple CLI  v16.1.0
+      ██     ██
+
   READY  Model glm-5.1 (glm)
   MCP 4/4 · 61 tools  |  2/2 skills  |  ReAct
 

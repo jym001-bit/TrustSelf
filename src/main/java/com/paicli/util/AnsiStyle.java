@@ -13,6 +13,7 @@ public final class AnsiStyle {
     private static final String YELLOW = "\u001B[33m";
     private static final String RED = "\u001B[31m";
     private static final String GRAY = "\u001B[90m";
+    private static final String ORANGE = "\u001B[38;5;209m";
     private static final String PURPLE = "\u001B[38;5;141m";
     private static final String BG_PANEL = "\u001B[48;5;236m";
     private static final boolean ENABLED = determineEnabled();
@@ -26,6 +27,10 @@ public final class AnsiStyle {
 
     public static String section(String text) {
         return wrap(BOLD + GREEN, text);
+    }
+
+    public static String mascot(String text) {
+        return wrap(ORANGE, text);
     }
 
     public static String answerMarker() {

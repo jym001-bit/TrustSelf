@@ -2831,7 +2831,13 @@ public class Main {
         String ready = "Model " + model + " (" + provider + ")";
         String state = mcp + "  |  " + skills + "  |  ReAct";
         List<String> lines = new ArrayList<>(List.of(
-                "  " + AnsiStyle.emphasis(PRODUCT_NAME) + "  " + AnsiStyle.subtle("v" + VERSION),
+                "      " + AnsiStyle.mascot("▄       ▄"),
+                "    " + AnsiStyle.mascot("▄███████████▄"),
+                "    " + AnsiStyle.mascot("███  ███  ███"),
+                "    " + AnsiStyle.mascot("█████████████") + "    "
+                        + AnsiStyle.emphasis(PRODUCT_NAME) + "  " + AnsiStyle.secondary("v" + VERSION),
+                "      " + AnsiStyle.mascot("██     ██"),
+                "",
                 "  " + AnsiStyle.section("READY") + "  " + AnsiStyle.secondary(ready),
                 "  " + AnsiStyle.secondary(state),
                 "",
