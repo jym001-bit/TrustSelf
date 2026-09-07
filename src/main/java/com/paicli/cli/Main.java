@@ -109,7 +109,17 @@ import java.util.regex.Pattern;
  */
 public class Main {
     private static final String PRODUCT_NAME = "Simple CLI";
+    private static final String LOGO_NAME = "SIMPLECLI";
     private static final String VERSION = "16.1.0";
+    private static final int STARTUP_PANEL_WIDTH = 68;
+    private static final List<String> SIMPLECLI_WORDMARK = List.of(
+            "███████╗██╗███╗   ███╗██████╗ ██╗     ███████╗ ██████╗██╗     ██╗",
+            "██╔════╝██║████╗ ████║██╔══██╗██║     ██╔════╝██╔════╝██║     ██║",
+            "███████╗██║██╔████╔██║██████╔╝██║     █████╗  ██║     ██║     ██║",
+            "╚════██║██║██║╚██╔╝██║██╔═══╝ ██║     ██╔══╝  ██║     ██║     ██║",
+            "███████║██║██║ ╚═╝ ██║██║     ███████╗███████╗╚██████╗███████╗██║",
+            "╚══════╝╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝ ╚═════╝╚══════╝╚═╝"
+    );
     private static final String ENV_FILE = ".env";
     private static final String LOG_DIR_PROPERTY = "paicli.log.dir";
     private static final String LOG_LEVEL_PROPERTY = "paicli.log.level";
@@ -2830,27 +2840,41 @@ public class Main {
                 : info.skillsEnabled() + "/" + info.skillsTotal() + " skills";
         String ready = "Model " + model + " (" + provider + ")";
         String state = mcp + "  |  " + skills + "  |  ReAct";
-        List<String> lines = new ArrayList<>(List.of(
-                "      " + AnsiStyle.mascot("▄       ▄"),
-                "    " + AnsiStyle.mascot("▄███████████▄"),
-                "    " + AnsiStyle.mascot("███  ███  ███"),
-                "    " + AnsiStyle.mascot("█████████████") + "    "
-                        + AnsiStyle.emphasis(PRODUCT_NAME) + "  " + AnsiStyle.secondary("v" + VERSION),
-                "      " + AnsiStyle.mascot("██     ██"),
-                "",
-                "  " + AnsiStyle.section("READY") + "  " + AnsiStyle.secondary(ready),
-                "  " + AnsiStyle.secondary(state),
-                "",
-                "  " + AnsiStyle.emphasis("/") + " commands    "
-                        + AnsiStyle.emphasis("@path") + " files    "
-                        + AnsiStyle.emphasis("@image:") + " images",
-                "  " + AnsiStyle.secondary("Type a task and press Enter.")
-        ));
+        List<String> lines = new ArrayList<>();
+        lines.add(AnsiStyle.secondary("╔" + "═".repeat(STARTUP_PANEL_WIDTH) + "╗"));
+        lines.add(startupPanelLine("", false));
+        for (String wordmarkLine : SIMPLECLI_WORDMARK) {
+            lines.add(startupPanelLine(wordmarkLine, true));
+        }
+        lines.add(startupPanelLine("", false));
+        lines.add(startupPanelLine(
+                LOGO_NAME + "  /  Terminal-First Agent CLI  /  v" + VERSION,
+                false));
+        lines.add(startupPanelLine("", false));
+        lines.add(AnsiStyle.secondary("╚" + "═".repeat(STARTUP_PANEL_WIDTH) + "╝"));
+        lines.add("");
+        lines.add("  " + AnsiStyle.section("READY") + "  " + AnsiStyle.secondary(ready));
+        lines.add("  " + AnsiStyle.secondary(state));
+        lines.add("");
+        lines.add("  " + AnsiStyle.emphasis("/") + " commands    "
+                + AnsiStyle.emphasis("@path") + " files    "
+                + AnsiStyle.emphasis("@image:") + " images");
+        lines.add("  " + AnsiStyle.secondary("Type a task and press Enter."));
         if (info.note() != null && !info.note().isBlank()) {
             lines.add("");
             lines.add(AnsiStyle.subtle(info.note().replace('\n', ' ')));
         }
         return lines;
+    }
+
+    private static String startupPanelLine(String content, boolean primary) {
+        String safe = content == null ? "" : content;
+        int available = Math.max(0, STARTUP_PANEL_WIDTH - safe.length());
+        int left = available / 2;
+        int right = available - left;
+        String centered = " ".repeat(left) + safe + " ".repeat(right);
+        String styled = primary ? AnsiStyle.emphasis(centered) : AnsiStyle.secondary(centered);
+        return AnsiStyle.secondary("║") + styled + AnsiStyle.secondary("║");
     }
 
     static McpConfigBootstrapResult ensureDefaultMcpConfig(Path userHome) throws IOException {

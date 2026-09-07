@@ -19,7 +19,7 @@ final class MemoryQueryTokenizer {
 
     private MemoryQueryTokenizer() {
     }
-
+    //jieba分词的调用
     /**
      * 对查询文本进行分词，返回用于检索匹配的 token 集合。
      */

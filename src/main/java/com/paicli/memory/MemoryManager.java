@@ -20,10 +20,10 @@ public class MemoryManager {
     private static final Logger log = LoggerFactory.getLogger(MemoryManager.class);
     private final ConversationMemory shortTermMemory;
     private final LongTermMemory longTermMemory;
-    private final ContextCompressor compressor;
-    private final MemoryRetriever retriever;
+    private final ContextCompressor compressor;//总结短期记忆
+    private final MemoryRetriever retriever;//在记忆里面寻找与当前相关的内容
     private TokenBudget tokenBudget;
-    private ContextProfile contextProfile;
+    private ContextProfile contextProfile;//模型窗口预算
     private String currentProject;
 
     public MemoryManager(LlmClient llmClient) {
@@ -82,10 +82,10 @@ public class MemoryManager {
                 Map.of("source", "user"),
                 MemoryEntry.estimateTokens(content)
         );
-        shortTermMemory.store(entry);
+        shortTermMemory.store(entry);//调用短期记忆保存
         compressIfNeeded();
     }
-
+    //助手消息
     /**
      * 添加助手回复到短期记忆
      */
@@ -165,7 +165,8 @@ public class MemoryManager {
     }
 
     /**
-     * 构建用于 LLM 的记忆上下文
+     * 构建用于 LLM 的记忆上下文，
+     * 并将其加入系统提示词
      */
     public String buildContextForQuery(String query, int maxTokens) {
         return retriever.buildContextForQuery(query, maxTokens, currentProject);

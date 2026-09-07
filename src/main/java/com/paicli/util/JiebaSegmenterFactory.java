@@ -18,7 +18,8 @@ public final class JiebaSegmenterFactory {
         synchronized (JiebaSegmenterFactory.class) {
             PrintStream originalOut = System.out;
             try {
-                System.setOut(new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
+                System.setOut
+                        (new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
                 return new JiebaSegmenter();
             } finally {
                 System.setOut(originalOut);

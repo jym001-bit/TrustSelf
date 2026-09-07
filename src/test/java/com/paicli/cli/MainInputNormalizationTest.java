@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -55,20 +56,25 @@ class MainInputNormalizationTest {
     }
 
     @Test
-    void startupBannerUsesCompactOpenLayoutWithoutRightBorder() {
+    void startupBannerUsesFramedSimpleCliWordmark() {
         List<String> lines = Main.startupBannerLines();
 
-        assertTrue(lines.stream().anyMatch(line -> line.contains("Simple CLI")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("SIMPLECLI")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("v16.1.0")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("███████╗██╗")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("██╔════╝")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("READY")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("@path")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("press Enter")));
-        assertTrue(lines.size() <= 12, "mascot and startup hints should fit comfortably on screen: " + lines);
+        assertTrue(lines.size() <= 20, "wordmark and startup hints should fit comfortably on screen: " + lines);
         assertTrue(lines.stream().noneMatch(line -> line.contains("π")));
         assertTrue(lines.stream().noneMatch(line -> line.contains("for shortcuts")));
-        assertTrue(lines.stream().noneMatch(line -> line.contains("────────────────")));
-        assertTrue(lines.stream().noneMatch(line -> line.endsWith("║")),
-                "banner should not depend on a padded right border");
+        assertTrue(lines.stream().anyMatch(line -> line.contains("╔") && line.contains("╗")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("╚") && line.contains("╝")));
+        assertTrue(lines.stream().filter(line -> line.contains("║")).allMatch(line -> line.endsWith("║")),
+                "framed banner lines should keep their right border");
+        assertTrue(Charset.forName("GBK").newEncoder().canEncode(String.join("\n", lines)),
+                "wordmark characters should remain printable in the Windows GBK fallback");
     }
 
     @Test

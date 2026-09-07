@@ -38,7 +38,7 @@ public class LongTermMemory implements Memory {
 
     public LongTermMemory(File storageDir) {
         this.entries = new ConcurrentHashMap<>();
-        this.tokenCounter = new AtomicInteger(0);
+        this.tokenCounter = new AtomicInteger(0);//记录长期记忆占用的token的数量
         this.mapper = new ObjectMapper();
         this.mapper.enable(SerializationFeature.INDENT_OUTPUT);
 
@@ -78,10 +78,10 @@ public class LongTermMemory implements Memory {
     }
 
     public List<MemoryEntry> search(String query, int limit, String projectKey) {
-        Set<String> queryTokens = MemoryQueryTokenizer.tokenize(query);
+        Set<String> queryTokens = MemoryQueryTokenizer.tokenize(query);//查询过滤 得到关键词
 
         return entries.values().stream()
-                .filter(entry -> isVisibleInProject(entry, projectKey))
+                .filter(entry -> isVisibleInProject(entry, projectKey))//只要global project
                 .filter(entry -> {
                     if (MemoryQueryTokenizer.matches(entry.getContent(), queryTokens)) {
                         return true;
@@ -158,6 +158,7 @@ public class LongTermMemory implements Memory {
         return "global";
     }
 
+    //转成List 写成Json
     /**
      * 持久化到磁盘
      */

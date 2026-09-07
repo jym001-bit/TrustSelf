@@ -94,7 +94,7 @@ src/main/java/com/paicli/
 
 启动与 inline 渲染当前约定：
 
-- 开屏 Banner 使用无边框布局，顶部是五行暖橙色像素小精灵（双触角、留空眼睛、短脚），右侧显示 Simple CLI 名称和版本；模型、MCP、Skill、ReAct 状态与快捷入口放在图案下方，避免长状态挤在图案右侧。图案颜色遵循 NO_COLOR / paicli.render.color 设置，不再把 MCP server 明细刷成启动日志。
+- 开屏 Banner 使用双线终端边框，框内是能直接读出 `SIMPLECLI` 的六行粗体轮廓字标以及产品副标题；装饰线只构成字母边缘，不得用阴影字符穿插或遮挡主笔画。模型、MCP、Skill、ReAct 状态与快捷入口放在边框下方，避免长状态撑坏字标。图案颜色遵循 NO_COLOR / paicli.render.color 设置，不再把 MCP server 明细刷成启动日志。
 - inline 模式使用 JLine 4 的 LineReader 编辑能力，默认提示符是 `* `，右提示显示 `message / @path / @image`。
 - 默认 CLI 启动路径应先 `Renderer.start()` 并初始化底部 dock；inline 首屏不要在 `readLine` 前裸写 stdout，而是通过 `InlineRenderer.installStartupScreen(...)` 挂到 `LineReader.CALLBACK_INIT`，首次进入输入时用 `printAbove` 一次性显示完整 Banner + tips，避免 logo 被 LineReader 首次重绘滚出可视区域。
 - `BottomStatusBar` 现在是 JLine `Status` 托管的底部 dock：由 JLine 维护滚动区域和状态行位置，不再手写 `\n` / `moveUp` / `CLEAR_TO_EOS` 清屏。输入期会把 LineReader 光标定位到 dock 上方一行，让 `*` 输入行和 Status 同处底部区域；dock 保留两类信息：上层模式 + MCP/Skill 摘要，下层 Simple CLI / model / phase / ctx 百分比与 token / cost / elapsed / cwd。关键字段可用克制的 JLine `AttributedString` 彩色样式突出，但纯文本格式和宽度裁剪逻辑要保持稳定。`ctx` 表示当前仍会带入下一轮请求的上下文估算；`in/out/cache` 表示最近任务的 LLM 调用统计，二者不要混用。

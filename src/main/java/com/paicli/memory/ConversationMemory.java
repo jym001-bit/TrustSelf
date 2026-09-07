@@ -12,10 +12,10 @@ import java.util.stream.Collectors;
  * 3. 提供关键词检索能力
  */
 public class ConversationMemory implements Memory {
-    private final LinkedHashMap<String, MemoryEntry> entries;
+    private final LinkedHashMap<String, MemoryEntry> entries;//有序，可以通过ID快速查找
     private int maxTokens;
     private int currentTokens;
-    private final List<MemoryEntry> compressedSummaries;
+    private final List<MemoryEntry> compressedSummaries;//超出预算的，被淘汰了
 
     /**
      * @param maxTokens 最大 token 预算，超出时触发压缩
@@ -29,7 +29,7 @@ public class ConversationMemory implements Memory {
 
     @Override
     public void store(MemoryEntry entry) {
-        entries.put(entry.getId(), entry);
+        entries.put(entry.getId(), entry);//保存信息
         currentTokens += entry.getTokenCount();
 
         // 超出预算时自动淘汰最旧的条目

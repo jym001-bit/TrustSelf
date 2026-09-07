@@ -19,7 +19,7 @@ public class MemoryRetriever {
         this.shortTermMemory = shortTermMemory;
         this.longTermMemory = longTermMemory;
     }
-
+    //混合检索
     /**
      * 检索与查询最相关的记忆
      *
@@ -28,7 +28,7 @@ public class MemoryRetriever {
      * @return 按相关度排序的记忆列表
      */
     public List<MemoryEntry> retrieve(String query, int limit) {
-        List<ScoredEntry> scored = new ArrayList<>();
+        List<ScoredEntry> scored = new ArrayList<>();//带分数
 
         // 从短期记忆中检索
         for (MemoryEntry entry : shortTermMemory.getAll()) {
@@ -41,7 +41,7 @@ public class MemoryRetriever {
         // 从长期记忆中检索
         for (MemoryEntry entry : longTermMemory.getAll()) {
             double score = computeRelevanceScore(entry, query);
-            // 长期记忆加一个小权重，因为它更精炼
+            // 长期记忆加一个小权重，因为它更精炼   * 1.2了
             if (score > 0) {
                 scored.add(new ScoredEntry(entry, score * 1.2, false));
             }
@@ -49,9 +49,9 @@ public class MemoryRetriever {
 
         // 按分数降序排序
         return scored.stream()
-                .sorted(Comparator.comparingDouble(ScoredEntry::score).reversed())
+                .sorted(Comparator.comparingDouble(ScoredEntry::score).reversed())//降序
                 .limit(limit)
-                .map(ScoredEntry::entry)
+                .map(ScoredEntry::entry)//转换类型
                 .collect(Collectors.toList());
     }
 
@@ -84,7 +84,7 @@ public class MemoryRetriever {
     }
 
     public String buildContextForQuery(String query, int maxTokens, String projectKey) {
-        List<MemoryEntry> relevant = retrieveLongTerm(query, 10, projectKey);
+        List<MemoryEntry> relevant = retrieveLongTerm(query, 10, projectKey);//10条长期记忆
         if (relevant.isEmpty()) return "";
 
         StringBuilder context = new StringBuilder();
@@ -102,11 +102,12 @@ public class MemoryRetriever {
         context.append("\n");
         return context.toString();
     }
-
+    //短期记忆
     /**
      * 计算记忆条目与查询的相关度分数
      */
     private double computeRelevanceScore(MemoryEntry entry, String query) {
+        //转成小写
         String contentLower = entry.getContent().toLowerCase();
         String queryLower = query.toLowerCase();
 
@@ -130,9 +131,9 @@ public class MemoryRetriever {
 
         // 3. 时间衰减（越近分数越高，简单实现）
         long ageMs = System.currentTimeMillis() - entry.getTimestamp().toEpochMilli();
-        double ageHours = ageMs / (1000.0 * 60 * 60);
+        double ageHours = ageMs / (1000.0 * 60 * 60);//毫秒转成小时
         double timeDecay = Math.max(0.5, 1.0 - ageHours / 24.0); // 24小时内从1.0衰减到0.5
-
+        //关键词的占比 * 时间衰减
         return keywordScore * timeDecay;
     }
 
