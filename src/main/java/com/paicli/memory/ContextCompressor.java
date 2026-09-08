@@ -105,12 +105,12 @@ public class ContextCompressor {
         }
 
         // 分割：旧消息 vs 近期消息（必须拷贝，因为后面会 clear 底层集合）
-        int splitPoint = allEntries.size() - retainRecentRounds;
-        List<MemoryEntry> oldEntries = new ArrayList<>(allEntries.subList(0, splitPoint));
-        List<MemoryEntry> recentEntries = new ArrayList<>(allEntries.subList(splitPoint, allEntries.size()));
+        int splitPoint = allEntries.size() - retainRecentRounds;//只保留最近的三个 计算切割的个数
+        List<MemoryEntry> oldEntries = new ArrayList<>(allEntries.subList(0, splitPoint));//切割List
+        List<MemoryEntry> recentEntries = new ArrayList<>(allEntries.subList(splitPoint, allEntries.size()));//最近
 
         // Map 阶段：分片摘要
-        List<String> chunkSummaries = mapPhase(oldEntries);
+        List<String> chunkSummaries = mapPhase(oldEntries);//5条一组
         if (chunkSummaries.isEmpty()) {
             return null;
         }

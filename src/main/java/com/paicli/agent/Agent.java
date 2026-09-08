@@ -326,8 +326,10 @@ public class Agent {
 
     private void maybeCompactHistory() {
         if (historyCompactor == null) return;
+        //获取当前模型自动压缩的阈值
         int trigger = memoryManager.getContextProfile().compressionTriggerTokens();
         try {
+            //超过压缩
             boolean compacted = historyCompactor.compactIfNeeded(conversationHistory, trigger);
             if (compacted) {
                 renderer().stream().println("📦 上下文接近窗口上限，已把早期对话压缩为摘要后继续。");
