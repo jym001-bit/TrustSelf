@@ -61,7 +61,7 @@ public class SubAgent {
         this.toolRegistry.setCurrentModel(llmClient.getProviderName(), llmClient.getModelName());
         this.conversationHistory = new ArrayList<>();
         this.historyCompactor = new ConversationHistoryCompactor(llmClient);
-        this.conversationHistory.add(LlmClient.Message.system(getSystemPrompt()));
+        this.conversationHistory.add(LlmClient.Message.system(getSystemPrompt()));//把当前角色sys提示词写入自己历史
     }
 
     public void setExternalContextSupplier(Supplier<String> externalContextSupplier) {
@@ -172,8 +172,8 @@ public class SubAgent {
      */
     public AgentMessage execute(AgentMessage task, PrintStream out) {
         log.info("[{}] executing task from {}: type={}", name, task.fromAgent(), task.type());
-        pruneHistoricalImagePayloads();
-        refreshSystemPrompt();
+        pruneHistoricalImagePayloads();//清理图片负载
+        refreshSystemPrompt();//刷新当前sys提示词
         String taskContent = prependSkillBodies(task.content());
 
         // 将任务注入对话
