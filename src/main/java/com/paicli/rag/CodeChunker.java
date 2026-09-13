@@ -52,19 +52,20 @@ public class CodeChunker {
             return List.of(CodeChunk.fileChunk(filePath, content));
         }
 
-        List<CodeChunk> chunks = new ArrayList<>();
-        String[] lines = content.split("\r?\n");
+        List<CodeChunk> chunks = new ArrayList<>();//保存已经完成的块
+        String[] lines = content.split("\r?\n",-1);//保留最后一个换行
         StringBuilder segment = new StringBuilder();
         int segIndex = 1;
-        int startLine = 1;
+        int startLine = 1;//源文件开始行数
 
         for (int i = 0; i < lines.length; i++) {
+            //装不下了的
             if (segment.length() + lines[i].length() + 1 > MAX_CHUNK_CHARS && !segment.isEmpty()) {
                 chunks.add(new CodeChunk(filePath, "file",
                         filePath + "#" + segIndex, segment.toString().trim(), startLine, i));
-                segment.setLength(0);
-                segIndex++;
-                startLine = i + 1;
+                segment.setLength(0);//清空文本容器
+                segIndex++;//编号 + 1
+                startLine = i + 1; //新块位置
             }
             segment.append(lines[i]).append("\n");
         }
@@ -79,7 +80,7 @@ public class CodeChunker {
 
     private List<CodeChunk> chunkJavaFile(Path filePath, String content) {
         List<CodeChunk> chunks = new ArrayList<>();
-        ParseResult<CompilationUnit> result = parser.parse(content);
+        ParseResult<CompilationUnit> result = parser.parse(content);//解析结果对象 Java语法树
 
         if (!result.isSuccessful() || result.getResult().isEmpty()) {
             // 解析失败则回退到按大小分段

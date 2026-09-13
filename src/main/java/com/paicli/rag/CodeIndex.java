@@ -65,7 +65,7 @@ public class CodeIndex {
         emit("🔍 开始索引: " + root);
 
         List<Path> filesToIndex = new ArrayList<>();
-        collectFiles(root, filesToIndex);
+        collectFiles(root, filesToIndex);//遍历目录并且过滤非必要文件 如.git
         emit("📁 发现 " + filesToIndex.size() + " 个文件待索引");
 
         List<VectorStore.CodeChunkEntry> entries = new ArrayList<>();
@@ -87,7 +87,7 @@ public class CodeIndex {
                 // 2. 生成 Embedding 并组装条目
                 for (CodeChunk chunk : chunks) {
                     float[] embedding = embeddingClient.embed(chunk.toEmbeddingText());
-                    entries.add(new VectorStore.CodeChunkEntry(chunk, embedding));
+                    entries.add(new VectorStore.CodeChunkEntry(chunk, embedding));//先放入内存
                 }
 
                 // 3. 分析关系（仅 Java 文件）
@@ -103,11 +103,11 @@ public class CodeIndex {
 
         // 4. 持久化到 SQLite
         try (VectorStore store = new VectorStore(root.toString())) {
-            store.clearProject();
-            store.insertChunks(entries);
-            store.insertRelations(allRelations);
+            store.clearProject();//删除旧的，写入新的
+            store.insertChunks(entries);//保存代码块、向量化等信息
+            store.insertRelations(allRelations);//写入关系表
 
-            VectorStore.IndexStats stats = store.getStats();
+            VectorStore.IndexStats stats = store.getStats();//获取当前代码块，关系数
             String msg = String.format("索引完成：%d 个代码块，%d 条关系", stats.chunkCount(), stats.relationCount());
             emit("✅ " + msg);
             return new IndexResult(stats.chunkCount(), stats.relationCount(), msg);

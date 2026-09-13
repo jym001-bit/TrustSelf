@@ -67,7 +67,7 @@ public class EmbeddingClient {
         requestBody.put("model", model);
         requestBody.put("prompt", text);
 
-        String responseBody = postJson(url, requestBody.toString(), false);
+        String responseBody = postJson(url, requestBody.toString(), false);//调用第三方embedding
         JsonNode root = mapper.readTree(responseBody);
         JsonNode embeddingNode = root.path("embedding");
 
