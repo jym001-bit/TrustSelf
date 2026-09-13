@@ -185,6 +185,8 @@ src/main/java/com/paicli/
 
 ### 5.1 改 Embedding → `EmbeddingClient` + `VectorStore` + `.env.example` + 文档
 
+`EmbeddingClient` 自身只读真实环境变量与系统属性；`.env` 中的 `EMBEDDING_*` 由 `Main.propagateEmbeddingConfig()` 在启动时提升为系统属性，新增/改名配置键必须同步 `Main.EMBEDDING_CONFIG_KEYS`。
+
 ### 5.2 改 Web/搜索 → `web/` 相关 + ToolRegistry + `.env.example` + 文档 + 测试
 
 ### 5.3 改 Memory → `MemoryManager` + `LongTermMemory` + `TokenBudget` + 测试 + 文档

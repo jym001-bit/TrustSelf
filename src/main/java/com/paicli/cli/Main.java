@@ -213,6 +213,7 @@ public class Main {
         configureAwtForCli();
         if (WechatCommandMain.isWechatCommand(args)) {
             configureLogging();
+            propagateEmbeddingConfig();
             int code = WechatCommandMain.run(args);
             if (code != 0) {
                 System.exit(code);
@@ -221,11 +222,13 @@ public class Main {
         }
         if (isRuntimeServeCommand(args)) {
             configureLogging();
+            propagateEmbeddingConfig();
             startRuntimeApiAndBlock(args);
             return;
         }
 
         configureLogging();
+        propagateEmbeddingConfig();
         //创建客户端模型
         PaiCliConfig config = PaiCliConfig.load();
         LlmClient llmClient = LlmClientFactory.createFromConfig(config);
@@ -2687,6 +2690,57 @@ public class Main {
         } catch (IOException e) {
             System.err.println("⚠️ 创建日志目录失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * Embedding 配置键。
+     * <p>
+     * {@link com.paicli.rag.EmbeddingClient} 只读真实环境变量与系统属性，不读 .env，
+     * 因此这里把 .env 中的值提升为系统属性，避免"写在 .env 里却不生效"。
+     */
+    static final List<String> EMBEDDING_CONFIG_KEYS = List.of(
+            "EMBEDDING_PROVIDER", "EMBEDDING_MODEL", "EMBEDDING_BASE_URL", "EMBEDDING_API_KEY");
+
+    /**
+     * 把 .env 中的 EMBEDDING_* 提升为系统属性。
+     * <p>
+     * 优先级与 {@link #loadConfigValue} 一致：系统属性（-D）> 真实环境变量 > 当前目录 .env > ~/.env。
+     * 已由系统属性或环境变量提供的键不覆盖；EmbeddingClient 仍会优先取环境变量。
+     */
+    static void propagateEmbeddingConfig() {
+        propagateEmbeddingConfig(
+                Path.of(ENV_FILE),
+                Path.of(System.getProperty("user.home"), ENV_FILE));
+    }
+
+    /**
+     * 可测试入口：显式指定两个 .env 候选文件（当前目录优先，其次用户目录）。
+     */
+    static void propagateEmbeddingConfig(Path workingDirEnv, Path homeEnv) {
+        for (String key : EMBEDDING_CONFIG_KEYS) {
+            if (isConfiguredValue(System.getProperty(key)) || isConfiguredValue(System.getenv(key))) {
+                continue;
+            }
+            String value = readDotEnvValue(workingDirEnv, key);
+            if (value == null) {
+                value = readDotEnvValue(homeEnv, key);
+            }
+            if (value != null) {
+                System.setProperty(key, value);
+            }
+        }
+    }
+
+    private static String readDotEnvValue(Path envFile, String key) {
+        if (envFile == null || !Files.isRegularFile(envFile)) {
+            return null;
+        }
+        String value = readValueFromFile(envFile.toFile(), key);
+        return isConfiguredValue(value) ? value.trim() : null;
+    }
+
+    private static boolean isConfiguredValue(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static void configureLogProperty(String propertyName, String envKey, String defaultValue) {

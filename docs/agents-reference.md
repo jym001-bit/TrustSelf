@@ -32,7 +32,9 @@ For the primary entry point, see `/AGENTS.md`.
 
 ### Embedding Config
 
-环境变量 > 系统属性 > 默认值：`EMBEDDING_PROVIDER`(ollama) / `EMBEDDING_MODEL`(nomic-embed-text:latest) / `EMBEDDING_BASE_URL`(http://localhost:11434)
+系统属性(-D) > 真实环境变量 > 工作目录 `.env` > `~/.env` > 默认值：`EMBEDDING_PROVIDER`(ollama) / `EMBEDDING_MODEL`(nomic-embed-text:latest) / `EMBEDDING_BASE_URL`(http://localhost:11434) / `EMBEDDING_API_KEY`(空)
+
+`EmbeddingClient` 自身只读环境变量与系统属性，`.env` 中的值由 `Main.propagateEmbeddingConfig()` 在启动时提升为系统属性。`provider=openai` 可对接任意 OpenAI 兼容端点（如阿里云百炼 `https://dashscope.aliyuncs.com/compatible-mode/v1` + `text-embedding-v4`）；provider 不属于 ollama/zhipu/glm 且未提供 `EMBEDDING_BASE_URL` 时会回落到 `http://localhost:11434`。
 
 ### Log Config
 
