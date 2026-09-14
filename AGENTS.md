@@ -19,6 +19,8 @@
 
 ## 运行前提
 
+- JLine JNI 在新版 JDK 上需要启用 native access。Windows bat 与 JAR 的 `Enable-Native-Access: ALL-UNNAMED` 清单项必须保留，否则可能降级为 dumb，导致 slash 菜单失效。`tools/TerminalProbe.java` 可在不调用模型的情况下检查 provider 与终端类型。
+
 - Java 17+ / Maven
 - 可选：`ripgrep`（`grep_code` 会优先使用；未安装时自动回退 Java 扫描）
 - 至少一个 API Key：`GLM_API_KEY` / `DEEPSEEK_API_KEY` / `STEP_API_KEY` / `KIMI_API_KEY` / `FREELLMAPI_API_KEY` / `XFYUN_MAAS_API_KEY` / `AGNES_API_KEY`
@@ -107,6 +109,7 @@ src/main/java/com/paicli/
 - 默认 CLI 启动路径应尽早建立 `Terminal -> LineReader -> Renderer`，启动 Banner、模型加载、MCP 启动、Skill summary、ReAct 提示和退出提示都应走 `Renderer.stream()`；除 fatal bootstrap / runtime API / legacy TUI 降级外，不要在交互主路径新增裸 `System.out.println`。
 - 启动期 MCP 不得阻塞首屏：CLI 默认最多等待 8 秒（`PAICLI_MCP_STARTUP_WAIT_SECONDS` / `-Dpaicli.mcp.startup.wait.seconds` 可调），超时后保留未完成 server 为 `STARTING` 并后台继续初始化；`/mcp` 查看最新状态。
 - `LineReader` 使用 `PaiCliHighlighter` 做输入实时高亮：slash 命令、`@` 引用、`@image:`、`@clipboard`、敏感词和明显危险 shell 片段会在编辑阶段被标记；不要把这类视觉提示混入最终提交文本。
+- `SlashMenuLineReader` 在输入 `/` 时自动显示最多 8 行顶级命令及说明，继续输入按前缀筛选；上下键选择，Tab/Enter 填入，再次 Enter 提交，Esc 只收起菜单。子命令继续使用 Tab 补全；dumb 终端回退原有输入。菜单通过 JLine post 区重绘，不直接写 ANSI 或改变终端编码。
 - `LineReader` 使用 `PaiCliCompleter` 做上下文补全：`/model` provider、`/mcp` 子命令与 server、`/skill` 子命令与 skill name、`/task` / `/browser` / `/snapshot` 子命令、`@image:` 本地路径、本地 `@path` 和 MCP resource `@server:uri` 引用都应从同一个 completer 出口维护。
 - 普通用户输入进入 Agent 前会先展开 MCP resource mention，再由 `LocalPathMentionExpander` 展开本地 `@path`：文件会内联为 `<file>` 块，目录会内联为 `<directory>` 列表；绝对路径或符号链接逃逸项目根时保持原文不展开。
 - `LineReader` 使用 `PaiCliHistory` 持久化输入历史到 `~/.paicli/history/input.history`；如果 `paicli.history.file` / `PAICLI_HISTORY_FILE` 指向目录，也会自动使用该目录下的 `input.history`，避免把目录当文件读；默认忽略空白、重复、明显密钥/Bearer、base64 图片和超长输入，用户可用 `/history clear` 清空本机输入历史。

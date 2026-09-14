@@ -25,6 +25,6 @@ if not exist "%JAR_PATH%" (
 )
 
 echo [Simple CLI] Starting with GBK terminal encoding...
-java "-Dorg.jline.terminal.stdin.encoding=GBK" "-Dorg.jline.terminal.stdout.encoding=GBK" "-Dorg.jline.terminal.stderr.encoding=GBK" -jar "%JAR_PATH%"
+java --enable-native-access=ALL-UNNAMED "-Dorg.jline.terminal.stdin.encoding=GBK" "-Dorg.jline.terminal.stdout.encoding=GBK" "-Dorg.jline.terminal.stderr.encoding=GBK" -jar "%JAR_PATH%"
 
 endlocal

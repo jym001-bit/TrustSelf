@@ -30,7 +30,7 @@ final class RagQueryTokenizer {
         }
 
         String normalized = query.trim();
-        List<String> words = SEGMENTER.sentenceProcess(normalized);
+        List<String> words = SEGMENTER.sentenceProcess(normalized);//jieba
         for (String word : words) {
             String token = word.trim();
             if (isUsefulToken(token)) {

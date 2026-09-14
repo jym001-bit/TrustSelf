@@ -58,7 +58,6 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.terminal.Attributes;
 import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.MaskingCallback;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.History;
@@ -269,13 +268,11 @@ public class Main {
                 }
             });
 
-            LineReader lineReader = LineReaderBuilder.builder()
-                    .terminal(terminal)
-                    .history(new PaiCliHistory())
-                    .completer(new PaiCliCompleter(mcpServerManager::resourceCandidates,
-                            () -> skillRegistryRef.get() == null ? List.of() : skillRegistryRef.get().allSkills()))
-                    .highlighter(new PaiCliHighlighter())
-                    .build();
+            SlashMenuLineReader lineReader = new SlashMenuLineReader(terminal);
+            lineReader.setHistory(new PaiCliHistory());
+            lineReader.setCompleter(new PaiCliCompleter(mcpServerManager::resourceCandidates,
+                    () -> skillRegistryRef.get() == null ? List.of() : skillRegistryRef.get().allSkills()));
+            lineReader.setHighlighter(new PaiCliHighlighter());
             lineReader.option(LineReader.Option.BRACKETED_PASTE, true);
             lineReader.option(LineReader.Option.AUTO_LIST, true);
             lineReader.option(LineReader.Option.AUTO_MENU, true);
@@ -375,6 +372,7 @@ public class Main {
             spaciousPrompt = defaultSpaciousPrompt(spaciousPrompt);
             bindCtrlVToClipboardImage(lineReader);
             bindEscToClearInput(lineReader);
+            lineReader.installSlashMenuBindings();
 
             while (true) {
                 refreshTerminalColumns(terminal);

@@ -198,7 +198,7 @@ public class VectorStore implements AutoCloseable {
                 WHERE project_path = ? AND (name LIKE ? ESCAPE '\\' OR content LIKE ? ESCAPE '\\')
                 """;
         List<SearchResult> results = new ArrayList<>();
-        String escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        String escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");//现转义
         String pattern = "%" + escaped + "%";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {

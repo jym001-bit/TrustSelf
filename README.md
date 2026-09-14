@@ -1,5 +1,9 @@
 # Simple CLI
 
+输入 `/` 自动展开命令菜单，继续输入可筛选。使用上下方向键选择，Tab 或 Enter 填入命令，再按 Enter 执行；Esc 收起菜单。子命令和参数仍可按 Tab 补全。不支持光标控制的 dumb 终端保留原有补全方式。
+
+Windows 启动脚本保留 GBK 输入配置，并启用 JLine 所需的 `--enable-native-access=ALL-UNNAMED`。JAR 清单也包含该设置，避免新版 JDK 因本地访问未启用而降级为 plain。排查终端可运行 `java --enable-native-access=ALL-UNNAMED -cp target/paicli-1.0-SNAPSHOT.jar tools/TerminalProbe.java`，不调用模型。
+
 > 品牌名称已更新为 **Simple CLI**。为避免破坏现有安装，Java 包名、Maven artifact、`.paicli` 数据目录、`PAICLI_*` 环境变量与 `X-PaiCLI-API-Key` 请求头继续兼容保留。
 
 一个成熟的 Java Agent CLI 产品，对标 Claude Code 作者为沉默王二，从第一期的 `ReAct` 单代理循环逐步演进到第十六期的 `TUI 产品化`。

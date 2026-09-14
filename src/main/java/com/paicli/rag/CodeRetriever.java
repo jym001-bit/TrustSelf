@@ -49,12 +49,12 @@ public class CodeRetriever implements AutoCloseable {
      */
     public List<VectorStore.SearchResult> hybridSearch(String query, int topK) throws Exception {
         Map<String, VectorStore.SearchResult> merged = new LinkedHashMap<>();
-        Set<String> dualMatchBonused = new HashSet<>();
+        Set<String> dualMatchBonused = new HashSet<>();//记录那些已经加分了
 
         // 1. 语义检索
         int semanticLimit = Math.max(topK * 2, 10);
         for (VectorStore.SearchResult result : semanticSearch(query, semanticLimit)) {
-            mergeResult(merged, result, dualMatchBonused);
+            mergeResult(merged, result, dualMatchBonused);//保留分数的选择
         }
 
         // 2. 关键词检索
@@ -80,23 +80,24 @@ public class CodeRetriever implements AutoCloseable {
         ranked.sort(Comparator.comparingDouble(VectorStore.SearchResult::similarity).reversed());
         return limitPerFile(ranked, topK, 2);
     }
-
-    private void mergeResult(Map<String, VectorStore.SearchResult> merged, VectorStore.SearchResult candidate,
-                             Set<String> dualMatchBonused) {
-        String key = candidate.filePath() + "#" + candidate.name();
+    //放入新的候选 代码块存在合并分数
+    private void mergeResult(Map<String, VectorStore.SearchResult> merged
+            , VectorStore.SearchResult candidate
+            , Set<String> dualMatchBonused) {
+        String key = candidate.filePath() + "#" + candidate.name();//文件路径 文件名
         VectorStore.SearchResult existing = merged.get(key);
         if (existing == null) {
-            merged.put(key, candidate);
+            merged.put(key, candidate);//直接保存
         } else {
-            double best = Math.max(existing.similarity(), candidate.similarity());
+            double best = Math.max(existing.similarity(), candidate.similarity());//已经存在，新的结果
             // 双重命中奖励只给一次，不重复叠加
             if (!dualMatchBonused.contains(key)) {
                 best += 0.1;
-                dualMatchBonused.add(key);
+                dualMatchBonused.add(key);//记录
             }
             merged.put(key, new VectorStore.SearchResult(
                     candidate.filePath(), candidate.chunkType(), candidate.name(),
-                    candidate.content(), best));
+                    candidate.content(), best));//替换原来的旧值
         }
     }
 
