@@ -1080,6 +1080,11 @@ public class Agent {
             if (reasoning.isEmpty()) {
                 return;
             }
+            if (renderer.appendThinkingBlock(reasoning)) {
+                thinkingQuotePrinted = true;
+                streamedOutput = true;
+                return;
+            }
             out().println(AnsiStyle.thinking("Thinking..."));
             for (String line : reasoning.split("\\R+")) {
                 String normalized = line.replaceAll("\\s+", " ").trim();

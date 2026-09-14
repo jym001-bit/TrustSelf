@@ -38,6 +38,10 @@ public interface Renderer extends AutoCloseable {
     }
 
     /** 当前渲染器是否支持独立的模型思考面板。 */
+    default boolean appendThinkingBlock(String reasoning) {
+        return false;
+    }
+
     default boolean supportsThinkingPanel() {
         return false;
     }

@@ -158,7 +158,7 @@ class InlineRendererTest {
     }
 
     @Test
-    void thinkingPanelRendersJLineActivityReasoningAndClears() {
+    void thinkingPanelKeepsReasoningHiddenAndClearsActivity() {
         Terminal terminal = Mockito.mock(Terminal.class);
         Mockito.when(terminal.getType()).thenReturn("xterm-256color");
         Mockito.when(terminal.getSize()).thenReturn(new Size(120, 40));
@@ -179,10 +179,8 @@ class InlineRendererTest {
             String rendered = sink.toString(StandardCharsets.UTF_8);
             assertTrue(renderer.supportsThinkingPanel());
             assertTrue(rendered.contains("Thinking"), rendered);
-            assertTrue(rendered.contains("先分析用户输入"), rendered);
-            assertTrue(rendered.contains("再检查状态栏边界"), rendered);
-            assertTrue(rendered.contains("|") || rendered.contains("│"),
-                    "activity display should show live reasoning quote content: " + rendered);
+            assertFalse(rendered.contains("先分析用户输入"), rendered);
+            assertFalse(rendered.contains("再检查状态栏边界"), rendered);
 
             sink.reset();
             renderer.endThinking();

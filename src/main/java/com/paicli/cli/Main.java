@@ -1931,11 +1931,17 @@ public class Main {
             return true;
         });
         Reference ref = new Reference("paicli-toggle-foldable");
+        lineReader.getWidgets().put("paicli-toggle-thinking", () -> {
+            inline.toggleThinkingBlocks();
+            lineReader.callWidget(LineReader.REDISPLAY);
+            return true;
+        });
         String ctrlO = String.valueOf((char) 15);  // Ctrl+O
         for (String mapName : new String[]{LineReader.MAIN, LineReader.EMACS, LineReader.VIINS}) {
             KeyMap<org.jline.reader.Binding> map = lineReader.getKeyMaps().get(mapName);
             if (map != null) {
                 map.bind(ref, ctrlO);
+                map.bind(new Reference("paicli-toggle-thinking"), String.valueOf((char) 20));
             }
         }
     }

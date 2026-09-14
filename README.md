@@ -1,5 +1,7 @@
 # Simple CLI
 
+默认 ReAct 模式的 Thinking 内容收起显示，不再实时刷出思考全文。回答结束回到输入行后，按 `Ctrl+T` 展开或收起本轮所有思考块；`Ctrl+O` 仍控制工具/代码块。该交互适用于 inline 终端模式。
+
 输入 `/` 自动展开命令菜单，继续输入可筛选。使用上下方向键选择，Tab 或 Enter 填入命令，再按 Enter 执行；Esc 收起菜单。子命令和参数仍可按 Tab 补全。不支持光标控制的 dumb 终端保留原有补全方式。
 
 Windows 启动脚本保留 GBK 输入配置，并启用 JLine 所需的 `--enable-native-access=ALL-UNNAMED`。JAR 清单也包含该设置，避免新版 JDK 因本地访问未启用而降级为 plain。排查终端可运行 `java --enable-native-access=ALL-UNNAMED -cp target/paicli-1.0-SNAPSHOT.jar tools/TerminalProbe.java`，不调用模型。

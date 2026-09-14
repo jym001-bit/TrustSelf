@@ -53,6 +53,7 @@ public final class InlineRenderer implements Renderer {
     private String codeHeaderLine;
     private int codeStartTranscriptIndex = -1;
     private boolean codeHeaderEmitted;
+    private final List<FoldableBlock> thinkingBlocks = new ArrayList<>();
 
     public InlineRenderer(Terminal terminal) {
         this(terminal, System.out);
@@ -77,6 +78,7 @@ public final class InlineRenderer implements Renderer {
     public void beginTurn() {
         synchronized (transcriptLock) {
             transcript.clear();
+            thinkingBlocks.clear();
             renderedRows = 0;
             lineBuffer.setLength(0);
             inCodeBlock = false;
@@ -152,7 +154,7 @@ public final class InlineRenderer implements Renderer {
 
     @Override
     public boolean supportsThinkingPanel() {
-        return activityDisplay != null;
+        return true;
     }
 
     @Override
@@ -164,8 +166,35 @@ public final class InlineRenderer implements Renderer {
 
     @Override
     public void appendThinking(String delta) {
-        if (activityDisplay != null && !closed) {
-            activityDisplay.appendThinking(delta);
+        // Agent retains the complete text; live output stays a compact activity indicator.
+    }
+
+    @Override
+    public boolean appendThinkingBlock(String reasoning) {
+        if (reasoning == null || reasoning.isBlank()) return true;
+        synchronized (transcriptLock) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Thinking (ctrl+t to collapse)");
+            reasoning.lines().forEach(line -> lines.add("| " + line));
+            FoldableBlock block = new FoldableBlock(out,
+                    AnsiStyle.subtle("> Thinking (" + reasoning.length() + " chars, ctrl+t to expand)"),
+                    lines, "< Thinking (ctrl+t to collapse)");
+            thinkingBlocks.add(block);
+            TranscriptEntry entry = new BlockEntry(block);
+            transcript.add(entry);
+            String rendered = entry.render();
+            renderedRows += estimateRows(rendered);
+            emit(rendered);
+        }
+        return true;
+    }
+
+    public boolean toggleThinkingBlocks() {
+        synchronized (transcriptLock) {
+            if (thinkingBlocks.isEmpty()) return false;
+            for (FoldableBlock block : thinkingBlocks) block.toggleForRedraw();
+            redrawTranscript();
+            return true;
         }
     }
 
