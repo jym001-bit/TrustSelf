@@ -34,7 +34,7 @@ public final class AnsiStyle {
     }
 
     public static String answerMarker() {
-        return wrap(BOLD + GREEN, "▪");
+        return wrap(BOLD + GREEN, ">");
     }
 
     public static String subtle(String text) {

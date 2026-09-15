@@ -30,6 +30,18 @@ class TerminalProbe {
                 if (args[0].equals("--thinking")) {
                     try (var renderer = new com.paicli.render.inline.InlineRenderer(terminal)) {
                         renderer.bindLineReader(reader);
+                        renderer.start();
+                        renderer.updateStatus(com.paicli.render.StatusInfo.idle("layout-test", 200000L, false));
+                        renderer.beginThinking("Thinking");
+                        renderer.appendThinking("Reasoning preview");
+                        renderer.toggleThinkingBlocks();
+                        renderer.endThinking();
+                        for (int row = 1; row <= 30; row++) {
+                            renderer.stream().println("Transcript row " + row + " - must stay above the status area.");
+                            renderer.updateStatus(com.paicli.render.StatusInfo.tokens("layout-test", 200000L,
+                                    row * 10L, row * 10L, row, 0L, null, false, row * 100L, "running"));
+                        }
+                        renderer.updateStatus(com.paicli.render.StatusInfo.idle("layout-test", 200000L, false));
                         var bind = Class.forName("com.paicli.cli.Main").getDeclaredMethod("bindCtrlOToFoldableBlocks",
                                 org.jline.reader.LineReader.class, com.paicli.render.inline.InlineRenderer.class);
                         bind.setAccessible(true);

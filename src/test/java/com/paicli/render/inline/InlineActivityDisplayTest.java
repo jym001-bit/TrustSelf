@@ -27,15 +27,18 @@ class InlineActivityDisplayTest {
         statusBar.update(StatusInfo.tokens("glm-5.1", 200_000L, 1234L, 1234L, 567L, 0L,
                 null, false, 3200L, "thinking"));
 
+        String output;
         try (InlineActivityDisplay display = new InlineActivityDisplay(terminal,
                 new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8),
                 statusBar)) {
             display.begin("Thinking");
             display.appendThinking("trying to read file");
             terminal.writer().flush();
+            output = statusBar.activityLines().toString();
         }
 
-        String output = terminalSink.toString(StandardCharsets.UTF_8);
+        assertTrue(statusBar.activityLines().isEmpty(), "closing activity must remove its Status rows");
+        assertTrue(terminalSink.toString(StandardCharsets.UTF_8).isEmpty(), "activity must not reposition transcript cursor");
         assertFalse(output.contains("Simple CLI"), "thinking panel should not duplicate status bar: " + output);
         assertFalse(output.contains("glm-5.1"), "thinking panel should not duplicate model status: " + output);
         assertTrue(output.contains("Thinking"), "thinking panel should keep the spinner label: " + output);

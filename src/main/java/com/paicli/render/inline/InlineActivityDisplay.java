@@ -31,6 +31,7 @@ final class InlineActivityDisplay implements AutoCloseable {
     private static final AttributedStyle QUOTE_STYLE = AttributedStyle.DEFAULT.faint().italic();
 
     private final Terminal terminal;
+    private final BottomStatusBar statusBar;
     private final PrintStream renderLock;
     private final ScheduledExecutorService scheduler;
     private final StringBuilder reasoning = new StringBuilder();
@@ -55,6 +56,7 @@ final class InlineActivityDisplay implements AutoCloseable {
 
     InlineActivityDisplay(Terminal terminal, PrintStream renderLock, BottomStatusBar statusBar) {
         this.terminal = terminal;
+        this.statusBar = statusBar;
         this.renderLock = renderLock;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "paicli-activity-display");
@@ -175,6 +177,10 @@ final class InlineActivityDisplay implements AutoCloseable {
         if (!active || closed) {
             return;
         }
+        if (statusBar != null) {
+            statusBar.setActivityLines(buildLines());
+            return;
+        }
         synchronized (renderLock) {
             PrintWriter writer = terminalWriter();
             clearRenderedArea(writer);
@@ -193,6 +199,10 @@ final class InlineActivityDisplay implements AutoCloseable {
     }
 
     private void clearLocked() {
+        if (statusBar != null) {
+            statusBar.setActivityLines(List.of());
+            return;
+        }
         synchronized (renderLock) {
             PrintWriter writer = terminalWriter();
             clearRenderedArea(writer);

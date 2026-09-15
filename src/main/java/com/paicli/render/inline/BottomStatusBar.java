@@ -3,7 +3,6 @@ package com.paicli.render.inline;
 import com.paicli.render.StatusInfo;
 import com.paicli.util.AnsiStyle;
 import org.jline.terminal.Terminal;
-import org.jline.utils.InfoCmp;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
@@ -68,6 +67,14 @@ public final class BottomStatusBar implements AutoCloseable {
     private Status status;
     private volatile boolean started;
     private volatile boolean closed;
+    private volatile List<AttributedString> activityLines = List.of();
+
+    List<AttributedString> activityLines() { return activityLines; }
+
+    synchronized void setActivityLines(List<AttributedString> lines) {
+        activityLines = List.copyOf(lines);
+        renderDock();
+    }
 
     public BottomStatusBar(Terminal terminal) {
         this.terminal = terminal;
@@ -111,7 +118,6 @@ public final class BottomStatusBar implements AutoCloseable {
     /** 在即将读取输入时刷新 JLine dock；光标和输入行位置由 LineReader 管理。 */
     public void prepareInputLine() {
         renderDock();
-        moveCursorToDockInputRow();
     }
 
     /** 输入提交后保留底部 dock；正文继续在 JLine 保留区上方滚动。 */
@@ -125,24 +131,11 @@ public final class BottomStatusBar implements AutoCloseable {
         if (info == null || dock == null || closed || !started) {
             return;
         }
-        int cols = TerminalCapabilities.safeSize(terminal).getColumns();
+        int cols = Math.max(1, TerminalCapabilities.safeSize(terminal).getColumns() - 1);
         synchronized (out) {
-            dock.update(formatStatusLines(info, cols));
-        }
-    }
-
-    private void moveCursorToDockInputRow() {
-        StatusInfo info = current;
-        if (info == null || closed || !started) {
-            return;
-        }
-        int rows = TerminalCapabilities.safeSize(terminal).getRows();
-        int cols = TerminalCapabilities.safeSize(terminal).getColumns();
-        int dockRows = formatStatusLines(info, cols).size() + 1; // JLine Status border.
-        int inputRow = inputDockRow(rows, dockRows);
-        synchronized (out) {
-            terminal.puts(InfoCmp.Capability.cursor_address, inputRow, 0);
-            terminal.flush();
+            java.util.ArrayList<AttributedString> lines = new java.util.ArrayList<>(activityLines);
+            lines.addAll(formatStatusLines(info, cols));
+            dock.update(lines);
         }
     }
 

@@ -60,7 +60,13 @@ public final class InlineRenderer implements Renderer {
     private String detailsText = "";
 
     public InlineRenderer(Terminal terminal) {
-        this(terminal, System.out);
+        this(terminal, terminalOutput(terminal));
+    }
+
+    private static PrintStream terminalOutput(Terminal terminal) {
+        if (terminal == null || terminal.writer() == null) return System.out;
+        return new PrintStream(new org.jline.utils.WriterOutputStream(terminal.writer(), StandardCharsets.UTF_8),
+                true, StandardCharsets.UTF_8);
     }
 
     /** 测试用构造器：注入输出流，避免污染真实 stdout。 */
@@ -382,6 +388,10 @@ public final class InlineRenderer implements Renderer {
         return statusBar != null;
     }
 
+    String activitySnapshot() {
+        return statusBar == null ? "" : statusBar.activityLines().toString();
+    }
+
     /** 测试 / Main.java 可见：拿到 terminal 用于其它 inline 组件。 */
     public Terminal terminal() {
         return terminal;
@@ -589,8 +599,10 @@ public final class InlineRenderer implements Renderer {
             reader.printAbove(text);
             return;
         }
-        out.print(text);
-        out.flush();
+        synchronized (out) {
+            out.print(text);
+            out.flush();
+        }
     }
 
     private static String joinLines(List<String> lines) {

@@ -26,6 +26,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InlineRendererTest {
 
     @Test
+    void productionOutputUsesTheTerminalWriter() {
+        Terminal terminal = Mockito.mock(Terminal.class);
+        Mockito.when(terminal.getType()).thenReturn("xterm-256color");
+        Mockito.when(terminal.getSize()).thenReturn(new Size(80, 24));
+        java.io.StringWriter text = new java.io.StringWriter();
+        Mockito.when(terminal.writer()).thenReturn(new PrintWriter(text));
+        try (InlineRenderer renderer = new InlineRenderer(terminal)) {
+            renderer.stream().println("中文正文");
+            renderer.stream().flush();
+            assertEquals("中文正文" + System.lineSeparator(), text.toString());
+        }
+    }
+
+    @Test
     void onAnsiTerminalEnablesStatusBar() {
         Terminal terminal = Mockito.mock(Terminal.class);
         Mockito.when(terminal.getType()).thenReturn("xterm-256color");
@@ -176,7 +190,8 @@ class InlineRendererTest {
             renderer.beginThinking("Thinking");
             renderer.appendThinking("先分析用户输入\n再检查状态栏边界");
 
-            String rendered = sink.toString(StandardCharsets.UTF_8);
+            assertTrue(sink.toString(StandardCharsets.UTF_8).isEmpty(), "activity must not write over transcript");
+            String rendered = renderer.activitySnapshot();
             assertTrue(renderer.supportsThinkingPanel());
             assertTrue(rendered.contains("Thinking"), rendered);
             assertFalse(rendered.contains("先分析用户输入"), rendered);
@@ -210,7 +225,8 @@ class InlineRendererTest {
         try {
             renderer.beginActivity("Compacting conversation", "正在整理早期对话并生成摘要");
 
-            String rendered = sink.toString(StandardCharsets.UTF_8);
+            assertTrue(sink.toString(StandardCharsets.UTF_8).isEmpty(), "activity must be managed by Status");
+            String rendered = renderer.activitySnapshot();
             assertTrue(renderer.supportsActivityPanel());
             assertTrue(rendered.contains("Compacting conversation"), rendered);
             assertTrue(rendered.contains("▰"), rendered);
