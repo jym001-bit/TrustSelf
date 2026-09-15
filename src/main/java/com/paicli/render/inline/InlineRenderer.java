@@ -54,6 +54,10 @@ public final class InlineRenderer implements Renderer {
     private int codeStartTranscriptIndex = -1;
     private boolean codeHeaderEmitted;
     private final List<FoldableBlock> thinkingBlocks = new ArrayList<>();
+    private final java.util.Deque<String> thinkingHistory = new java.util.ArrayDeque<>();
+    private volatile boolean thinkingActive;
+    private volatile boolean liveThinkingExpanded;
+    private String detailsText = "";
 
     public InlineRenderer(Terminal terminal) {
         this(terminal, System.out);
@@ -79,6 +83,8 @@ public final class InlineRenderer implements Renderer {
         synchronized (transcriptLock) {
             transcript.clear();
             thinkingBlocks.clear();
+            detailsText = "";
+            installDetails();
             renderedRows = 0;
             lineBuffer.setLength(0);
             inCodeBlock = false;
@@ -159,25 +165,36 @@ public final class InlineRenderer implements Renderer {
 
     @Override
     public void beginThinking(String label) {
+        synchronized (transcriptLock) {
+            thinkingActive = true;
+            liveThinkingExpanded = false;
+        }
         if (activityDisplay != null && !closed) {
+            activityDisplay.setThinkingExpanded(false);
             activityDisplay.begin(label);
         }
     }
 
     @Override
     public void appendThinking(String delta) {
-        // Agent retains the complete text; live output stays a compact activity indicator.
+        if (delta == null) return;
+        if (activityDisplay != null && !closed) activityDisplay.appendThinking(delta);
     }
 
     @Override
     public boolean appendThinkingBlock(String reasoning) {
         if (reasoning == null || reasoning.isBlank()) return true;
         synchronized (transcriptLock) {
+            thinkingHistory.addLast(reasoning);
+            while (thinkingHistory.size() > 20 || (thinkingHistory.size() > 1
+                    && thinkingHistory.stream().mapToInt(String::length).sum() > 200_000)) {
+                thinkingHistory.removeFirst();
+            }
             List<String> lines = new ArrayList<>();
             lines.add("Thinking (ctrl+t to collapse)");
             reasoning.lines().forEach(line -> lines.add("| " + line));
             FoldableBlock block = new FoldableBlock(out,
-                    AnsiStyle.subtle("> Thinking (" + reasoning.length() + " chars, ctrl+t to expand)"),
+                    AnsiStyle.subtle("> Thinking (" + reasoning.length() + " chars; Ctrl+T: recent thinking)"),
                     lines, "< Thinking (ctrl+t to collapse)");
             thinkingBlocks.add(block);
             TranscriptEntry entry = new BlockEntry(block);
@@ -191,15 +208,32 @@ public final class InlineRenderer implements Renderer {
 
     public boolean toggleThinkingBlocks() {
         synchronized (transcriptLock) {
-            if (thinkingBlocks.isEmpty()) return false;
-            for (FoldableBlock block : thinkingBlocks) block.toggleForRedraw();
-            redrawTranscript();
+            if (thinkingActive) {
+                liveThinkingExpanded = !liveThinkingExpanded;
+                if (activityDisplay != null) activityDisplay.setThinkingExpanded(liveThinkingExpanded);
+                return true;
+            }
+            if (thinkingHistory.isEmpty()) return false;
+            detailsText = detailsText.isEmpty() ? String.join("\n\n--- Thinking ---\n\n", thinkingHistory) : "";
+            installDetails();
             return true;
         }
     }
 
+    private void installDetails() {
+        if (lineReader instanceof com.paicli.cli.SlashMenuLineReader reader) {
+            String snapshot = detailsText;
+            reader.setDetails(() -> snapshot);
+        }
+    }
+
+    String thinkingDetails() {
+        synchronized (transcriptLock) { return detailsText; }
+    }
+
     @Override
     public void endThinking() {
+        thinkingActive = false;
         if (activityDisplay != null) {
             activityDisplay.end();
         }
@@ -360,6 +394,21 @@ public final class InlineRenderer implements Renderer {
 
     /** Main.java 用：Ctrl+O 触发内存态切换，然后重绘本轮 transcript。 */
     public boolean toggleLastBlock() {
+        if (lineReader instanceof com.paicli.cli.SlashMenuLineReader) {
+            synchronized (transcriptLock) {
+                if (!detailsText.isEmpty()) {
+                    detailsText = "";
+                } else {
+                    FoldableBlock block = blockRegistry.peekLast();
+                    if (block == null) return false;
+                    block.toggleForRedraw();
+                    detailsText = String.join("\n", block.currentLines());
+                    block.toggleForRedraw();
+                }
+                installDetails();
+                return true;
+            }
+        }
         boolean changed = blockRegistry.toggleLastForRedraw();
         if (changed) {
             redrawTranscript();
@@ -369,6 +418,10 @@ public final class InlineRenderer implements Renderer {
 
     private PrintStream createTranscriptStream(PrintStream delegate) {
         return new PrintStream(new OutputStream() {
+            private final java.nio.charset.CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(java.nio.charset.CodingErrorAction.REPLACE)
+                    .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPLACE);
+            private byte[] incomplete = new byte[0];
             @Override
             public void write(int b) {
                 write(new byte[]{(byte) b}, 0, 1);
@@ -379,22 +432,37 @@ public final class InlineRenderer implements Renderer {
                 if (len <= 0) {
                     return;
                 }
-                String text = new String(b, off, len, StandardCharsets.UTF_8);
                 synchronized (transcriptLock) {
                     if (redrawing) {
                         // 重绘期间 BlockEntry.render() 已经决定折叠/展开形态，原样转发不再走折叠状态机
                         delegate.write(b, off, len);
                         return;
                     }
-                    feedWithCodeBlockDetection(text);
+                    java.nio.ByteBuffer input = java.nio.ByteBuffer.allocate(incomplete.length + len);
+                    input.put(incomplete).put(b, off, len).flip();
+                    java.nio.CharBuffer output = java.nio.CharBuffer.allocate(input.remaining());
+                    decoder.decode(input, output, false);
+                    incomplete = new byte[input.remaining()];
+                    input.get(incomplete);
+                    output.flip();
+                    feedWithCodeBlockDetection(output.toString());
                 }
             }
 
             @Override
             public void flush() {
+                synchronized (transcriptLock) {
+                    if (!inCodeBlock && !lineBuffer.isEmpty()) {
+                        String partial = lineBuffer.toString();
+                        lineBuffer.setLength(0);
+                        emit(partial);
+                        transcript.add(new TextEntry(partial));
+                        renderedRows += estimateRows(partial);
+                    }
+                }
                 delegate.flush();
             }
-        }, true, StandardCharsets.UTF_8);
+        }, false, StandardCharsets.UTF_8);
     }
 
     /**

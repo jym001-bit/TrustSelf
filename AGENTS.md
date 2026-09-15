@@ -19,7 +19,7 @@
 
 ## 运行前提
 
-- inline ReAct thinking 默认折叠：流式期间只显示 activity，结束后通过 `Renderer.appendThinkingBlock` 注册折叠块，禁止重复打印全文。输入期 Ctrl+T 切换本轮全部 thinking 块，Ctrl+O 保留工具/代码块切换。
+- inline thinking 默认折叠：ReAct 运行期 Ctrl+T 切换 activity 预览；输入期 Ctrl+T / Ctrl+O 通过 SlashMenuLineReader 的 JLine post 区打开思考/工具详情，PgUp/PgDn 滚动，禁止用 printAbove 重打整轮 transcript 来模拟折叠。Plan/Team 通过 ThinkingChat 分流 reasoning，保留模型响应原文。最近思考跨轮保留至 20 段/约 20 万字符；运行期普通键入缓存在下一输入框，不自动提交。
 
 - JLine JNI 在新版 JDK 上需要启用 native access。Windows bat 与 JAR 的 `Enable-Native-Access: ALL-UNNAMED` 清单项必须保留，否则可能降级为 dumb，导致 slash 菜单失效。`tools/TerminalProbe.java` 可在不调用模型的情况下检查 provider 与终端类型。
 
@@ -103,7 +103,7 @@ src/main/java/com/paicli/
 - 默认 CLI 启动路径应先 `Renderer.start()` 并初始化底部 dock；inline 首屏不要在 `readLine` 前裸写 stdout，而是通过 `InlineRenderer.installStartupScreen(...)` 挂到 `LineReader.CALLBACK_INIT`，首次进入输入时用 `printAbove` 一次性显示完整 Banner + tips，避免 logo 被 LineReader 首次重绘滚出可视区域。
 - `BottomStatusBar` 现在是 JLine `Status` 托管的底部 dock：由 JLine 维护滚动区域和状态行位置，不再手写 `\n` / `moveUp` / `CLEAR_TO_EOS` 清屏。输入期会把 LineReader 光标定位到 dock 上方一行，让 `*` 输入行和 Status 同处底部区域；dock 保留两类信息：上层模式 + MCP/Skill 摘要，下层 Simple CLI / model / phase / ctx 百分比与 token / cost / elapsed / cwd。关键字段可用克制的 JLine `AttributedString` 彩色样式突出，但纯文本格式和宽度裁剪逻辑要保持稳定。`ctx` 表示当前仍会带入下一轮请求的上下文估算；`in/out/cache` 表示最近任务的 LLM 调用统计，二者不要混用。
 - 普通任务和斜杠命令提交后，`Main` 会把本轮原始输入以暗色整行块写回 transcript：输入态左提示仍是 `* `，提交回显左提示改为 `>`；单行输入只占一行，不额外追加空白行。普通任务随后再展开 MCP resource / 本地 `@path` 并进入 Agent；不要只依赖 JLine 提交行残留，否则 activity 重绘或 dock 刷新可能让用户输入从可见历史里消失。`/clear` 清空 conversationHistory、shortTermMemory、待注入 Skill buffer，并重建不含上一轮检索记忆的 system prompt；长期记忆保留。`/compact` 会手动压缩当前 ReAct conversationHistory，不等待上下文阈值触发，保留最近 1 个 user 轮次和 tool_call/tool_result 边界。
-- ReAct LLM 调用期间，inline renderer 只显示紧凑 `Thinking...` activity，不显示 reasoning 预览。content 或 tool call 开始前清掉 live 区，把 reasoning 保存为默认收起的 transcript 折叠块；输入期 Ctrl+T 展开/收起。正文回答用低调标记起始，不再刷强标题。
+- ReAct LLM 调用期间默认只显示紧凑 `Thinking...` activity，Ctrl+T 可切换实时预览。content 或 tool call 开始前清掉 live 区，把 reasoning 保存到最近思考存储并输出摘要；输入期 Ctrl+T 查看详情。普通无 Markdown 标记的长段落允许在换行前输出，结构化 Markdown 仍按行解析。
 - 交互期输出应优先走 `Renderer.stream()`；`Main`、`PlanExecuteAgent`、`Planner`、`AgentOrchestrator` 都支持把输出流接到 inline renderer，避免直接争抢 stdout。`CodeIndex` 的索引进度通过 `ProgressListener` 注入，`/index` 应绑定到当前 renderer 输出流。
 - Phase 22 开始，`InlineRenderer` 可绑定当前 `LineReader`；当 `LineReader.isReading()` 为 true 时，`Renderer.stream()` 的完整行输出优先通过 `LineReader#printAbove` 显示在输入行上方，未绑定 / 非读取态 / 测试路径回退到原 `PrintStream`。
 - Markdown 表格渲染要按当前终端列宽分配列宽；长内容在单元格内部换行，不能依赖终端自动折行把整行表格打散。

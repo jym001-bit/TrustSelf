@@ -27,6 +27,7 @@ public final class TerminalMarkdownRenderer {
     private final StringBuilder pending = new StringBuilder();
     private final List<String> pendingTable = new ArrayList<>();
     private boolean inCodeBlock;
+    private boolean streamingParagraph;
     private boolean needsLineBreakBeforeNextBlock;
     private boolean lastOutputBlank;
     private BlockType lastBlockType = BlockType.NONE;
@@ -53,9 +54,23 @@ public final class TerminalMarkdownRenderer {
 
         pending.append(chunk);
         flushCompleteLines();
+        if (streamingParagraph || (!inCodeBlock && pendingTable.isEmpty() && pending.length() >= 24
+                && pending.toString().matches("[\\p{L}\\p{N}][^`*_|#>\\r\\n]*"))) {
+            out.print(pending.toString());
+            out.flush();
+            pending.setLength(0);
+            streamingParagraph = true;
+            lastOutputBlank = false;
+            lastBlockType = BlockType.PARAGRAPH;
+        }
     }
 
     public void finish() {
+        if (streamingParagraph) {
+            out.println(pending.toString());
+            pending.setLength(0);
+            streamingParagraph = false;
+        }
         if (pending.length() > 0) {
             processLine(pending.toString());
             pending.setLength(0);
@@ -84,7 +99,12 @@ public final class TerminalMarkdownRenderer {
             if (line.endsWith("\r")) {
                 line = line.substring(0, line.length() - 1);
             }
-            processLine(line);
+            if (streamingParagraph) {
+                out.println(line);
+                streamingParagraph = false;
+            } else {
+                processLine(line);
+            }
             pending.delete(0, newlineIndex + 1);
         }
     }

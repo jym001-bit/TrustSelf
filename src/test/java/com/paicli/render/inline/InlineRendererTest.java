@@ -88,7 +88,7 @@ class InlineRendererTest {
             renderer.beginTurn();
             renderer.stream().println("异步通知");
 
-            Mockito.verify(lineReader).printAbove("异步通知\n");
+            Mockito.verify(lineReader).printAbove("异步通知" + System.lineSeparator());
             assertFalse(sink.toString(StandardCharsets.UTF_8).contains("异步通知"));
         } finally {
             renderer.close();

@@ -40,6 +40,11 @@ import java.util.function.Supplier;
  * - Reviewer 在并行路径中按步骤即时创建独立实例，避免对话历史竞争
  */
 public class AgentOrchestrator {
+    public void setThinkingSink(java.util.function.Consumer<String> sink) {
+        planner.setThinkingSink(sink);
+        workers.forEach(worker -> worker.setThinkingSink(sink));
+        reviewer.setThinkingSink(sink);
+    }
     private static final Logger log = LoggerFactory.getLogger(AgentOrchestrator.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final int MAX_RETRIES_PER_STEP = 2;

@@ -23,6 +23,8 @@ import java.util.function.Supplier;
  * 规划器 - 使用LLM将复杂任务分解为执行计划
  */
 public class Planner {
+    private java.util.function.Consumer<String> thinkingSink;
+    public void setThinkingSink(java.util.function.Consumer<String> sink) { thinkingSink = sink; }
     private static final Logger log = LoggerFactory.getLogger(Planner.class);
 
     private final LlmClient llmClient;
@@ -65,7 +67,7 @@ public class Planner {
 
         // 调用LLM生成计划
         PlanningStreamRenderer streamRenderer = new PlanningStreamRenderer(out);
-        LlmClient.ChatResponse response = llmClient.chat(messages, null, streamRenderer);
+        LlmClient.ChatResponse response = com.paicli.render.ThinkingChat.chat(llmClient, messages, null, streamRenderer, thinkingSink);
         LlmTraceLogger.logReasoning(log, "planner", llmClient, response.reasoningContent());
         streamRenderer.finish();
         String planJson = response.content();

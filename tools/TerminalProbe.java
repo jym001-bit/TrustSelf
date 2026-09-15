@@ -19,7 +19,7 @@ class TerminalProbe {
         try (var terminal = TerminalBuilder.builder().system(true).dumb(true).build()) {
             System.out.println("Terminal: " + terminal.getClass().getName());
             System.out.println("Type: " + terminal.getType() + " size=" + terminal.getSize());
-            if (args.length > 0 && args[0].equals("--menu")) {
+            if (args.length > 0 && (args[0].equals("--menu") || args[0].equals("--thinking"))) {
                 var type = Class.forName("com.paicli.cli.SlashMenuLineReader");
                 var constructor = type.getDeclaredConstructor(org.jline.terminal.Terminal.class);
                 constructor.setAccessible(true);
@@ -27,6 +27,19 @@ class TerminalProbe {
                 var install = type.getDeclaredMethod("installSlashMenuBindings");
                 install.setAccessible(true);
                 install.invoke(reader);
+                if (args[0].equals("--thinking")) {
+                    try (var renderer = new com.paicli.render.inline.InlineRenderer(terminal)) {
+                        renderer.bindLineReader(reader);
+                        var bind = Class.forName("com.paicli.cli.Main").getDeclaredMethod("bindCtrlOToFoldableBlocks",
+                                org.jline.reader.LineReader.class, com.paicli.render.inline.InlineRenderer.class);
+                        bind.setAccessible(true);
+                        bind.invoke(null, reader, renderer);
+                        renderer.appendThinkingBlock("Reasoning detail line\n".repeat(40));
+                        renderer.stream().println("ANSWER appears once. Ctrl+T opens/closes details; PgDn scrolls.");
+                        reader.readLine("> ");
+                    }
+                    return;
+                }
                 System.out.println("Type / to test the menu. Submitted text is only echoed, never executed.");
                 System.out.println("Submitted: " + reader.readLine("> "));
             }

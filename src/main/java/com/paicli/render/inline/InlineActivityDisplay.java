@@ -38,6 +38,12 @@ final class InlineActivityDisplay implements AutoCloseable {
     private boolean active;
     private boolean closed;
     private String label = "Thinking";
+    private boolean thinkingExpanded = true;
+
+    synchronized void setThinkingExpanded(boolean expanded) {
+        thinkingExpanded = expanded;
+        if (active) renderLocked();
+    }
     private boolean showCancelHint = true;
     private long startedNanos;
     private int frame;
@@ -237,6 +243,7 @@ final class InlineActivityDisplay implements AutoCloseable {
                 : " (" + elapsedSeconds() + "s)";
         lines.add(fit("  " + spinner() + " " + label + "..." + suffix, cols, STATUS_STYLE));
 
+        if (!thinkingExpanded) return lines;
         List<String> quoteLines = reasoningLines();
         int quoteWidth = Math.max(12, cols - 4);
         int start = Math.max(0, quoteLines.size() - MAX_REASONING_ROWS);

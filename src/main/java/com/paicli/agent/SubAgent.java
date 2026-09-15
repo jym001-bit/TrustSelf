@@ -39,6 +39,8 @@ import java.util.function.Supplier;
  * 但共享 LLM 客户端和工具注册表。
  */
 public class SubAgent {
+    private java.util.function.Consumer<String> thinkingSink;
+    public void setThinkingSink(java.util.function.Consumer<String> sink) { thinkingSink = sink; }
     private static final Logger log = LoggerFactory.getLogger(SubAgent.class);
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
@@ -204,10 +206,10 @@ public class SubAgent {
             maybeCompactHistory(out);
 
             try {
-                LlmClient.ChatResponse response = llmClient.chat(
+                LlmClient.ChatResponse response = com.paicli.render.ThinkingChat.chat(llmClient,
                         conversationHistory,
                         shouldUseTools() && llmClient.supportsTools() ? toolRegistry.getToolDefinitions() : null,
-                        streamRenderer
+                        streamRenderer, thinkingSink
                 );
                 LlmTraceLogger.logReasoning(log,
                         "sub-agent name=" + name + " role=" + role + " iteration=" + budget.iteration(),

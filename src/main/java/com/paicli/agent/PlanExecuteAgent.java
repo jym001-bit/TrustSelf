@@ -40,6 +40,11 @@ import java.util.stream.Collectors;
  * Plan-and-Execute Agent - 先规划后执行
  */
 public class PlanExecuteAgent {
+    private java.util.function.Consumer<String> thinkingSink;
+    public void setThinkingSink(java.util.function.Consumer<String> sink) {
+        thinkingSink = sink;
+        planner.setThinkingSink(sink);
+    }
     private static final Logger log = LoggerFactory.getLogger(PlanExecuteAgent.class);
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
     private record PlanRunOutcome(String result, boolean persistAssistantMessage) {
@@ -486,10 +491,10 @@ public class PlanExecuteAgent {
             injectPendingLspDiagnostics(messages, out);
             maybeCompactHistory(messages, out);
 
-            LlmClient.ChatResponse response = llmClient.chat(
+            LlmClient.ChatResponse response = com.paicli.render.ThinkingChat.chat(llmClient,
                     messages,
                     llmClient.supportsTools() ? toolRegistry.getToolDefinitions() : null,
-                    streamRenderer
+                    streamRenderer, thinkingSink
             );
             LlmTraceLogger.logReasoning(log,
                     "plan-task task=" + task.getId() + " iteration=" + iteration,

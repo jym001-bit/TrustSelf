@@ -58,6 +58,7 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.terminal.Attributes;
 import org.jline.reader.LineReader;
+import org.jline.reader.Widget;
 import org.jline.reader.MaskingCallback;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.History;
@@ -823,6 +824,7 @@ public class Main {
                     LlmClient activeClient = llmClient;
                     runTask = () -> {
                         PlanExecuteAgent planAgent = createPlanAgent(activeClient, reactAgent, terminal, lineReader, ui);
+                        if (renderer instanceof InlineRenderer inline) planAgent.setThinkingSink(inline::appendThinkingBlock);
                         planAgent.setExternalContextSupplier(mcpServerManager::resourceIndexForPrompt);
                         planAgent.setSkillRegistry(skillRegistry);
                         planAgent.setSkillContextBuffer(skillContextBuffer);
@@ -833,6 +835,7 @@ public class Main {
                     LlmClient activeClient = llmClient;
                     runTask = () -> {
                         AgentOrchestrator orchestrator = createTeamAgent(activeClient, reactAgent, ui);
+                        if (renderer instanceof InlineRenderer inline) orchestrator.setThinkingSink(inline::appendThinkingBlock);
                         orchestrator.setExternalContextSupplier(mcpServerManager::resourceIndexForPrompt);
                         orchestrator.setSkillSystem(skillRegistry, skillContextBuffer);
                         return orchestrator.run(taskInput);
@@ -844,7 +847,7 @@ public class Main {
                 SnapshotService snapshotService = reactAgent.getToolRegistry().getSnapshotService();
                 renderer.updateStatus(statusInfo(reactAgent, mcpServerManager, skillRegistry, snapshotMode));
                 String response = runWithCancelSupport(terminal,
-                        ui,
+                        renderer, lineReader,
                         () -> snapshotService.runTurn(snapshotMode, taskInput, runTask::call));
                 if (!"react".equals(snapshotMode)) {
                     renderer.updateStatus(statusInfo(reactAgent, mcpServerManager, skillRegistry, "idle"));
@@ -1117,7 +1120,8 @@ public class Main {
         return new AgentOrchestrator(llmClient, reactAgent.getToolRegistry(), reactAgent.getMemoryManager(), out);
     }
 
-    private static String runWithCancelSupport(Terminal terminal, PrintStream out, Callable<String> task) {
+    private static String runWithCancelSupport(Terminal terminal, Renderer renderer, LineReader lineReader, Callable<String> task) {
+        StringBuilder queuedInput = new StringBuilder();
         CancellationToken token = CancellationContext.startRun();
         ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
             Thread thread = new Thread(r, "paicli-agent-runner");
@@ -1136,7 +1140,14 @@ public class Main {
                 }
             }
             while (!future.isDone()) {
-                if (original != null && readEscCancel(terminal)) {
+                if (original != null && readEscCancel(terminal, key -> {
+                    if (key == 20 && renderer instanceof InlineRenderer inline) inline.toggleThinkingBlocks();
+                    else if ((key >= 32 || key == 8 || key == 127) && queuedInput.length() < 8192) {
+                        if (key == 8 || key == 127) {
+                            if (!queuedInput.isEmpty()) queuedInput.deleteCharAt(queuedInput.length() - 1);
+                        } else queuedInput.appendCodePoint(key);
+                    }
+                })) {
                     token.cancel();
                     future.cancel(true);
                     executor.shutdownNow();
@@ -1168,6 +1179,16 @@ public class Main {
                 }
             }
             CancellationContext.clear(token);
+            if (!queuedInput.isEmpty()) {
+                String pendingInput = queuedInput.toString();
+                Widget previousInit = lineReader.getWidgets().get(LineReader.CALLBACK_INIT);
+                lineReader.getWidgets().put(LineReader.CALLBACK_INIT, () -> {
+                    lineReader.getWidgets().put(LineReader.CALLBACK_INIT, previousInit);
+                    if (previousInit != null) previousInit.apply();
+                    lineReader.getBuffer().write(pendingInput);
+                    return true;
+                });
+            }
             executor.shutdownNow();
         }
     }
@@ -1181,6 +1202,10 @@ public class Main {
      * - CONTROL_SEQUENCE / BRACKETED_PASTE / OTHER → 丢弃，不取消
      */
     static boolean readEscCancel(Terminal terminal) {
+        return readEscCancel(terminal, key -> {});
+    }
+
+    static boolean readEscCancel(Terminal terminal, java.util.function.IntConsumer onKey) {
         if (terminal == null) {
             return false;
         }
@@ -1192,12 +1217,9 @@ public class Main {
             }
             String escTail = next == 27 ? readInputBurst(terminal, 80, 20, 120) : null;
             if (next != 27) {
-                // 非 ESC 输入，drain 这一轮残余字节避免堆积，但不触发取消。
-                while (true) {
-                    int more = reader.read(1);
-                    if (more == NonBlockingReader.READ_EXPIRED || more < 0) {
-                        break;
-                    }
+                onKey.accept(next);
+                while (reader.peek(1) >= 0 && reader.peek(1) != 27) {
+                    onKey.accept(reader.read());
                 }
             }
             return decideEscCancel(next, escTail);

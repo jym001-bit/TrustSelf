@@ -14,7 +14,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 /** A transient slash menu rendered by JLine alongside its input buffer. */
-final class SlashMenuLineReader extends LineReaderImpl {
+public final class SlashMenuLineReader extends LineReaderImpl {
+    private java.util.function.Supplier<String> details = () -> "";
+    private int detailOffset;
+
+    public void setDetails(java.util.function.Supplier<String> details) {
+        this.details = details;
+        detailOffset = 0;
+    }
     private String previousInput = "";
     private String dismissedInput;
     private int selected;
@@ -41,7 +48,22 @@ final class SlashMenuLineReader extends LineReaderImpl {
             bindMenuKey(map, "\r", 0);
             bindMenuKey(map, "\n", 0);
             bindMenuKey(map, "\033", 2);
+            bindDetailScroll(map, "\033[5~", -1);
+            bindDetailScroll(map, "\033[6~", 1);
         }
+    }
+
+    private void bindDetailScroll(KeyMap<Binding> map, String key, int direction) {
+        Binding fallback = map.getBound(key);
+        map.bind((Widget) () -> {
+            if (!details.get().isEmpty()) {
+                detailOffset = Math.max(0, detailOffset + direction * Math.max(1, terminal.getHeight() / 2));
+                return true;
+            }
+            if (fallback instanceof Reference ref) callWidget(ref.name());
+            else if (fallback instanceof Widget widget) return widget.apply();
+            return true;
+        }, key);
     }
 
     private void bindMenuKey(KeyMap<Binding> map, String key, int action) {
@@ -94,14 +116,15 @@ final class SlashMenuLineReader extends LineReaderImpl {
     @Override
     protected void redisplay(boolean flush) {
         List<Main.SlashCommandHint> choices = menuChoices();
-        if (choices.isEmpty()) {
+        String detailText = details.get();
+        if (choices.isEmpty() && detailText.isEmpty()) {
             super.redisplay(flush);
             return;
         }
         // Let JLine own cursor movement and clearing; never print a second screen over it.
         var previousPost = post;
         SuggestionType previousSuggestion = getAutosuggestion();
-        post = () -> renderMenu(choices);
+        post = () -> choices.isEmpty() ? renderDetails(detailText) : renderMenu(choices);
         setAutosuggestion(SuggestionType.NONE);
         try {
             super.redisplay(flush);
@@ -109,6 +132,20 @@ final class SlashMenuLineReader extends LineReaderImpl {
             post = previousPost;
             setAutosuggestion(previousSuggestion);
         }
+    }
+
+    private AttributedString renderDetails(String text) {
+        int width = Math.max(1, terminal.getWidth() - 1);
+        int height = Math.max(1, terminal.getHeight() - 9);
+        var lines = new AttributedString(text).columnSplitLength(width, false, true);
+        detailOffset = Math.min(detailOffset, Math.max(0, lines.size() - height));
+        var result = new AttributedStringBuilder();
+        result.append(new AttributedString("Details | PgUp/PgDn scroll | Ctrl+T/O close")
+                .columnSubSequence(0, width)).append('\n');
+        for (int i = detailOffset; i < Math.min(lines.size(), detailOffset + height); i++) {
+            result.append(lines.get(i)).append('\n');
+        }
+        return result.toAttributedString();
     }
 
     private AttributedString renderMenu(List<Main.SlashCommandHint> choices) {
