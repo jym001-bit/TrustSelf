@@ -24,6 +24,7 @@ class TerminalProbe {
                 var constructor = type.getDeclaredConstructor(org.jline.terminal.Terminal.class);
                 constructor.setAccessible(true);
                 var reader = (org.jline.reader.LineReader) constructor.newInstance(terminal);
+                reader.option(org.jline.reader.LineReader.Option.ERASE_LINE_ON_FINISH, true);
                 var install = type.getDeclaredMethod("installSlashMenuBindings");
                 install.setAccessible(true);
                 install.invoke(reader);

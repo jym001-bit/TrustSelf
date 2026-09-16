@@ -93,6 +93,18 @@ class MainInputNormalizationTest {
     }
 
     @Test
+    void interactiveReaderLetsJLineEraseAcceptedInputWithinItsStatusLayout() throws Exception {
+        LineReader lineReader = newLineReader();
+
+        Main.configureInteractiveLineReader(lineReader);
+
+        assertTrue(lineReader.isSet(LineReader.Option.ERASE_LINE_ON_FINISH));
+        assertTrue(lineReader.isSet(LineReader.Option.BRACKETED_PASTE));
+        assertTrue(lineReader.isSet(LineReader.Option.AUTO_LIST));
+        assertTrue(lineReader.isSet(LineReader.Option.AUTO_MENU));
+    }
+
+    @Test
     void mcpStartupWaitCanBeTunedForTerminalSmoke() {
         String old = System.getProperty("paicli.mcp.startup.wait.seconds");
         try {

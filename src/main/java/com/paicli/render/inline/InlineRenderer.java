@@ -13,7 +13,6 @@ import org.jline.terminal.Terminal;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -298,30 +297,6 @@ public final class InlineRenderer implements Renderer {
             }
             return ok;
         });
-    }
-
-    /**
-     * 清掉 JLine accept 后留在屏幕上的编辑态输入行。
-     *
-     * <p>普通任务会随后以 {@code > prompt} 的 transcript 块写回；这里清理的是编辑态
-     * {@code * prompt}，避免同一条输入在屏幕上出现两次。
-     */
-    public void clearAcceptedInput(String input) {
-        if (terminal == null || closed) {
-            return;
-        }
-        int rows = acceptedInputRows(input);
-        synchronized (out) {
-            PrintWriter writer = terminal.writer();
-            if (writer != null) {
-                writer.print(clearAcceptedInputSequence(rows));
-                writer.flush();
-            } else {
-                out.print(clearAcceptedInputSequence(rows));
-                out.flush();
-            }
-            terminal.flush();
-        }
     }
 
     public void printSubmittedPrompt(String input) {
@@ -611,58 +586,6 @@ public final class InlineRenderer implements Renderer {
         }
         String block = String.join("\n", lines);
         return block.endsWith("\n") ? block : block + "\n";
-    }
-
-    private int acceptedInputRows(String input) {
-        int cols = Math.max(1, TerminalCapabilities.safeSize(terminal).getColumns());
-        String text = input == null ? "" : input;
-        String[] parts = text.split("\\R", -1);
-        int rows = 0;
-        for (int i = 0; i < parts.length; i++) {
-            int cells = displayWidth(parts[i]) + (i == 0 ? displayWidth(inputPrompt()) : 0);
-            rows += Math.max(1, (cells + cols - 1) / cols);
-        }
-        return Math.max(1, rows);
-    }
-
-    static String clearAcceptedInputSequence(int rows) {
-        int count = Math.max(1, rows);
-        StringBuilder sb = new StringBuilder();
-        sb.append(AnsiSeq.moveUp(count)).append('\r');
-        for (int i = 0; i < count; i++) {
-            sb.append(AnsiSeq.CLEAR_LINE);
-            if (i < count - 1) {
-                sb.append('\n');
-            }
-        }
-        if (count > 1) {
-            sb.append(AnsiSeq.moveUp(count - 1));
-        }
-        sb.append('\r');
-        return sb.toString();
-    }
-
-    private static int displayWidth(String text) {
-        if (text == null || text.isEmpty()) {
-            return 0;
-        }
-        int width = 0;
-        for (int i = 0; i < text.length(); ) {
-            int cp = text.codePointAt(i);
-            width += isWideCodePoint(cp) ? 2 : 1;
-            i += Character.charCount(cp);
-        }
-        return width;
-    }
-
-    private static boolean isWideCodePoint(int cp) {
-        Character.UnicodeScript script = Character.UnicodeScript.of(cp);
-        return script == Character.UnicodeScript.HAN
-                || script == Character.UnicodeScript.HIRAGANA
-                || script == Character.UnicodeScript.KATAKANA
-                || script == Character.UnicodeScript.HANGUL
-                || (cp >= 0x1F300 && cp <= 0x1FAFF)
-                || (cp >= 0xFF01 && cp <= 0xFF60);
     }
 
     private static String stripAnsi(String s) {

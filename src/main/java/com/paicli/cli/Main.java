@@ -274,9 +274,7 @@ public class Main {
             lineReader.setCompleter(new PaiCliCompleter(mcpServerManager::resourceCandidates,
                     () -> skillRegistryRef.get() == null ? List.of() : skillRegistryRef.get().allSkills()));
             lineReader.setHighlighter(new PaiCliHighlighter());
-            lineReader.option(LineReader.Option.BRACKETED_PASTE, true);
-            lineReader.option(LineReader.Option.AUTO_LIST, true);
-            lineReader.option(LineReader.Option.AUTO_MENU, true);
+            configureInteractiveLineReader(lineReader);
             configureHistory(lineReader, Path.of(System.getProperty("user.home")));
             configureSlashCommandHint(lineReader);
             configureJLineInteractiveWidgets(lineReader);
@@ -386,10 +384,6 @@ public class Main {
                 } catch (EndOfFileException e) {
                     break;  // Ctrl+D 退出
                 }
-                if (renderer instanceof InlineRenderer inline) {
-                    inline.clearAcceptedInput(promptInput.text());
-                }
-
                 if (promptInput.canceled()) {
                     if (nextTaskUsePlanMode) {
                         nextTaskUsePlanMode = false;
@@ -1288,6 +1282,16 @@ public class Main {
 
     static boolean defaultSpaciousPrompt(boolean statusBarAvailable) {
         return false;
+    }
+
+    static void configureInteractiveLineReader(LineReader lineReader) {
+        lineReader.option(LineReader.Option.BRACKETED_PASTE, true);
+        lineReader.option(LineReader.Option.AUTO_LIST, true);
+        lineReader.option(LineReader.Option.AUTO_MENU, true);
+        // JLine owns both the editable line and Status dock. Let it erase the
+        // accepted line while it still knows the complete display layout;
+        // manual cursor-up sequences corrupt the dock's scroll region.
+        lineReader.option(LineReader.Option.ERASE_LINE_ON_FINISH, true);
     }
 
     static void printSubmittedPrompt(PrintStream out, String input) {
