@@ -2,6 +2,7 @@ package com.paicli.cli;
 
 import org.jline.terminal.Size;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.AttributedString;
 import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,6 +11,27 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SlashMenuLineReaderTest {
+    @Test
+    void footerIsClippedAndOwnedByTheLineReaderDisplay() throws Exception {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try (var terminal = TerminalBuilder.builder().system(false).type("xterm")
+                .streams(new ByteArrayInputStream(new byte[0]), output)
+                .encoding(StandardCharsets.UTF_8).build()) {
+            terminal.setSize(new Size(12, 20));
+            var reader = new SlashMenuLineReader(terminal);
+            reader.setFooterLines(() -> List.of(new AttributedString("footer status")));
+            reader.runMacro("\r");
+            assertEquals("", reader.readLine("> "));
+            assertTrue(output.toString(StandardCharsets.UTF_8).contains("footer stat"));
+
+            AttributedString footer = reader.renderFooter(List.of(
+                    new AttributedString("first status line"),
+                    new AttributedString("second status line")));
+
+            assertEquals("first statu\nsecond stat", footer.toString());
+        }
+    }
+
     @Test
     void filtersCommandsAndIgnoresPathsAndArguments() {
         assertTrue(SlashMenuLineReader.matchingCommands("/").size() > 10);

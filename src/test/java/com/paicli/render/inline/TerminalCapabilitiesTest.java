@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,7 +55,7 @@ class TerminalCapabilitiesTest {
         Terminal small = Mockito.mock(Terminal.class);
         Mockito.when(small.getType()).thenReturn("xterm-256color");
         Mockito.when(small.getSize()).thenReturn(new Size(40, 4));
-        assertFalse(TerminalCapabilities.supportsScrollRegion(small));
+        assertFalse(TerminalCapabilities.supportsScrollRegion(small, Map.of()));
     }
 
     @Test
@@ -61,7 +63,7 @@ class TerminalCapabilitiesTest {
         Terminal normal = Mockito.mock(Terminal.class);
         Mockito.when(normal.getType()).thenReturn("xterm-256color");
         Mockito.when(normal.getSize()).thenReturn(new Size(120, 40));
-        assertTrue(TerminalCapabilities.supportsScrollRegion(normal));
+        assertTrue(TerminalCapabilities.supportsScrollRegion(normal, Map.of()));
     }
 
     @Test
@@ -70,7 +72,41 @@ class TerminalCapabilitiesTest {
         Terminal normal = Mockito.mock(Terminal.class);
         Mockito.when(normal.getType()).thenReturn("xterm-256color");
         Mockito.when(normal.getSize()).thenReturn(new Size(120, 40));
-        assertFalse(TerminalCapabilities.supportsScrollRegion(normal));
+        assertFalse(TerminalCapabilities.supportsScrollRegion(normal, Map.of()));
+    }
+
+    @Test
+    void jetBrainsTerminalUsesLineReaderFooterInsteadOfScrollRegion() {
+        Terminal normal = Mockito.mock(Terminal.class);
+        Mockito.when(normal.getType()).thenReturn("xterm-256color");
+        Mockito.when(normal.getSize()).thenReturn(new Size(160, 50));
+
+        assertFalse(TerminalCapabilities.supportsScrollRegion(normal,
+                Map.of("TERMINAL_EMULATOR", "JetBrains-JediTerm")));
+        assertTrue(TerminalCapabilities.supportsLineReaderFooter(normal,
+                Map.of("TERMINAL_EMULATOR", "JetBrains-JediTerm")));
+    }
+
+    @Test
+    void vscodeTerminalUsesLineReaderFooterInsteadOfScrollRegion() {
+        Terminal normal = Mockito.mock(Terminal.class);
+        Mockito.when(normal.getType()).thenReturn("xterm-256color");
+        Mockito.when(normal.getSize()).thenReturn(new Size(160, 50));
+
+        assertFalse(TerminalCapabilities.supportsScrollRegion(normal,
+                Map.of("TERM_PROGRAM", "vscode")));
+        assertTrue(TerminalCapabilities.supportsLineReaderFooter(normal,
+                Map.of("TERM_PROGRAM", "vscode")));
+    }
+
+    @Test
+    void explicitDisableAlsoDisablesEmbeddedFooter() {
+        Terminal normal = Mockito.mock(Terminal.class);
+        Mockito.when(normal.getType()).thenReturn("xterm-256color");
+        Mockito.when(normal.getSize()).thenReturn(new Size(160, 50));
+
+        assertFalse(TerminalCapabilities.supportsLineReaderFooter(normal,
+                Map.of("TERMINAL_EMULATOR", "JetBrains-JediTerm", "PAICLI_NO_STATUSBAR", "true")));
     }
 
     @Test

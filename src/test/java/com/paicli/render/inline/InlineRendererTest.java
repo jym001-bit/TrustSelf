@@ -64,6 +64,7 @@ class InlineRendererTest {
         InlineRenderer renderer = new InlineRenderer(terminal);
         try {
             assertFalse(renderer.hasStatusBar());
+            assertFalse(renderer.supportsThinkingPanel());
             // updateStatus should still not throw
             renderer.start();
             renderer.updateStatus(StatusInfo.idle("glm-5.1", 200_000L, false));

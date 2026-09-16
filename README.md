@@ -770,7 +770,7 @@ I
 - GLM-5.1 API
 - OkHttp
 - Jackson
-- JLine 4（终端交互、Status、输入 widgets）
+- JLine 4（终端交互、输入 widgets；独立终端使用 Status dock，IDE 内嵌终端使用 LineReader footer）
 - SQLite（向量与图谱持久化）
 - JavaParser（AST 分析）
 - Ollama（本地 Embedding）

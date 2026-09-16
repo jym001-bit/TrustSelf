@@ -12,15 +12,26 @@ import org.jline.utils.AttributedStyle;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /** A transient slash menu rendered by JLine alongside its input buffer. */
 public final class SlashMenuLineReader extends LineReaderImpl {
-    private java.util.function.Supplier<String> details = () -> "";
+    private Supplier<String> details = () -> "";
+    private Supplier<List<AttributedString>> footerLines = List::of;
     private int detailOffset;
 
-    public void setDetails(java.util.function.Supplier<String> details) {
-        this.details = details;
+    public void setDetails(Supplier<String> details) {
+        this.details = Objects.requireNonNullElse(details, () -> "");
         detailOffset = 0;
+    }
+
+    /**
+     * Sets status lines rendered inside the same JLine display as the input.
+     * This is the safe fallback for IDE terminals whose scroll regions are unreliable.
+     */
+    public void setFooterLines(Supplier<List<AttributedString>> footerLines) {
+        this.footerLines = Objects.requireNonNullElse(footerLines, List::of);
     }
     private String previousInput = "";
     private String dismissedInput;
@@ -117,14 +128,17 @@ public final class SlashMenuLineReader extends LineReaderImpl {
     protected void redisplay(boolean flush) {
         List<Main.SlashCommandHint> choices = menuChoices();
         String detailText = details.get();
-        if (choices.isEmpty() && detailText.isEmpty()) {
+        List<AttributedString> currentFooter = safeFooterLines();
+        if (choices.isEmpty() && detailText.isEmpty() && currentFooter.isEmpty()) {
             super.redisplay(flush);
             return;
         }
         // Let JLine own cursor movement and clearing; never print a second screen over it.
         var previousPost = post;
         SuggestionType previousSuggestion = getAutosuggestion();
-        post = () -> choices.isEmpty() ? renderDetails(detailText) : renderMenu(choices);
+        post = () -> !choices.isEmpty()
+                ? renderMenu(choices)
+                : !detailText.isEmpty() ? renderDetails(detailText) : renderFooter(currentFooter);
         setAutosuggestion(SuggestionType.NONE);
         try {
             super.redisplay(flush);
@@ -132,6 +146,23 @@ public final class SlashMenuLineReader extends LineReaderImpl {
             post = previousPost;
             setAutosuggestion(previousSuggestion);
         }
+    }
+
+    private List<AttributedString> safeFooterLines() {
+        List<AttributedString> lines = footerLines.get();
+        return lines == null ? List.of() : lines.stream().filter(Objects::nonNull).toList();
+    }
+
+    AttributedString renderFooter(List<AttributedString> lines) {
+        int width = Math.max(1, terminal.getWidth() - 1);
+        AttributedStringBuilder result = new AttributedStringBuilder();
+        for (int i = 0; i < lines.size(); i++) {
+            result.append(lines.get(i).columnSubSequence(0, width));
+            if (i + 1 < lines.size()) {
+                result.append('\n');
+            }
+        }
+        return result.toAttributedString();
     }
 
     private AttributedString renderDetails(String text) {

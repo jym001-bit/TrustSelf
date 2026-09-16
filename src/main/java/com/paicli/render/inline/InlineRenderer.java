@@ -39,6 +39,7 @@ public final class InlineRenderer implements Renderer {
     private final List<TranscriptEntry> transcript = new ArrayList<>();
     private final AtomicBoolean startupScreenPrinted = new AtomicBoolean(true);
     private volatile LineReader lineReader;
+    private volatile StatusInfo currentStatus;
     private int renderedRows;
     private boolean redrawing;
     private volatile boolean started;
@@ -165,7 +166,7 @@ public final class InlineRenderer implements Renderer {
 
     @Override
     public boolean supportsThinkingPanel() {
-        return true;
+        return activityDisplay != null;
     }
 
     @Override
@@ -272,6 +273,17 @@ public final class InlineRenderer implements Renderer {
      */
     public void bindLineReader(LineReader lineReader) {
         this.lineReader = lineReader;
+        if (statusBar == null && TerminalCapabilities.supportsLineReaderFooter(terminal)
+                && lineReader instanceof com.paicli.cli.SlashMenuLineReader reader) {
+            reader.setFooterLines(() -> {
+                StatusInfo status = currentStatus;
+                if (status == null || closed) {
+                    return List.of();
+                }
+                int cols = Math.max(1, TerminalCapabilities.safeSize(terminal).getColumns() - 1);
+                return BottomStatusBar.formatStatusLines(status, cols);
+            });
+        }
     }
 
     /**
@@ -334,8 +346,9 @@ public final class InlineRenderer implements Renderer {
 
     @Override
     public void updateStatus(StatusInfo status) {
+        currentStatus = BottomStatusBar.mergeEnvironment(status, currentStatus);
         if (statusBar != null) {
-            statusBar.update(status);
+            statusBar.update(currentStatus);
         }
         if (activityDisplay != null) {
             activityDisplay.refreshIfActive();

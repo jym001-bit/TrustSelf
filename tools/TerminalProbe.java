@@ -7,6 +7,8 @@ class TerminalProbe {
     public static void main(String[] args) throws Exception {
         System.out.println("Java: " + System.getProperty("java.version"));
         System.out.println("TERM: " + System.getenv("TERM"));
+        System.out.println("TERMINAL_EMULATOR: " + System.getenv("TERMINAL_EMULATOR"));
+        System.out.println("TERM_PROGRAM: " + System.getenv("TERM_PROGRAM"));
         for (String name : new String[]{"jni"}) {
             try {
                 var provider = TerminalProvider.load(name);
@@ -19,6 +21,10 @@ class TerminalProbe {
         try (var terminal = TerminalBuilder.builder().system(true).dumb(true).build()) {
             System.out.println("Terminal: " + terminal.getClass().getName());
             System.out.println("Type: " + terminal.getType() + " size=" + terminal.getSize());
+            System.out.println("Fixed status dock: "
+                    + com.paicli.render.inline.TerminalCapabilities.supportsScrollRegion(terminal));
+            System.out.println("LineReader status footer: "
+                    + com.paicli.render.inline.TerminalCapabilities.supportsLineReaderFooter(terminal));
             if (args.length > 0 && (args[0].equals("--menu") || args[0].equals("--thinking"))) {
                 var type = Class.forName("com.paicli.cli.SlashMenuLineReader");
                 var constructor = type.getDeclaredConstructor(org.jline.terminal.Terminal.class);

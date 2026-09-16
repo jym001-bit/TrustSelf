@@ -19,7 +19,7 @@
 
 ## 运行前提
 
-- inline thinking 默认折叠：ReAct 运行期 Ctrl+T 切换 activity 预览；输入期 Ctrl+T / Ctrl+O 通过 SlashMenuLineReader 的 JLine post 区打开思考/工具详情，PgUp/PgDn 滚动，禁止用 printAbove 重打整轮 transcript 来模拟折叠。Plan/Team 通过 ThinkingChat 分流 reasoning，保留模型响应原文。最近思考跨轮保留至 20 段/约 20 万字符；运行期普通键入缓存在下一输入框，不自动提交。输入提交后的编辑行由 JLine `ERASE_LINE_ON_FINISH` 清理，禁止手写光标上移清行，否则会破坏 Status dock 的滚动区域。
+- inline thinking 默认折叠：ReAct 运行期 Ctrl+T 切换 activity 预览；输入期 Ctrl+T / Ctrl+O 通过 SlashMenuLineReader 的 JLine post 区打开思考/工具详情，PgUp/PgDn 滚动，禁止用 printAbove 重打整轮 transcript 来模拟折叠。Plan/Team 通过 ThinkingChat 分流 reasoning，保留模型响应原文。最近思考跨轮保留至 20 段/约 20 万字符；运行期普通键入缓存在下一输入框，不自动提交。输入提交后的编辑行由 JLine `ERASE_LINE_ON_FINISH` 清理，禁止手写光标上移清行。JetBrains/JediTerm 与 VS Code/Cursor 内嵌终端禁用 JLine `Status` 滚动保留区，状态行改由同一个 `LineReader.post` 管理。
 
 - JLine JNI 在新版 JDK 上需要启用 native access。Windows bat 与 JAR 的 `Enable-Native-Access: ALL-UNNAMED` 清单项必须保留，否则可能降级为 dumb，导致 slash 菜单失效。`tools/TerminalProbe.java` 可在不调用模型的情况下检查 provider 与终端类型。
 
@@ -101,7 +101,7 @@ src/main/java/com/paicli/
 - 开屏 Banner 使用双线终端边框，框内是能直接读出 `SIMPLECLI` 的六行粗体轮廓字标以及产品副标题；装饰线只构成字母边缘，不得用阴影字符穿插或遮挡主笔画。模型、MCP、Skill、ReAct 状态与快捷入口放在边框下方，避免长状态撑坏字标。图案颜色遵循 NO_COLOR / paicli.render.color 设置，不再把 MCP server 明细刷成启动日志。
 - inline 模式使用 JLine 4 的 LineReader 编辑能力，默认提示符是 `* `，右提示显示 `message / @path / @image`。
 - 默认 CLI 启动路径应先 `Renderer.start()` 并初始化底部 dock；inline 首屏不要在 `readLine` 前裸写 stdout，而是通过 `InlineRenderer.installStartupScreen(...)` 挂到 `LineReader.CALLBACK_INIT`，首次进入输入时用 `printAbove` 一次性显示完整 Banner + tips，避免 logo 被 LineReader 首次重绘滚出可视区域。
-- `BottomStatusBar` 由 JLine `Status` 托管滚动区域、activity 和底部状态行。输入行沿正文自然流动，禁止在 readLine 前手写 cursor_address 跳到底部。生产 inline 正文经 UTF-8 WriterOutputStream 写入 terminal.writer，与状态区共用输出通道；禁止混用 System.out。状态行保留右侧一列避免自动换行。`ctx` 表示上下文估算，`in/out/cache` 表示最近任务调用统计。
+- 独立终端中的 `BottomStatusBar` 由 JLine `Status` 托管滚动区域、activity 和底部状态行；JetBrains/JediTerm 与 VS Code/Cursor 内嵌终端使用 `SlashMenuLineReader` 的 post footer，避免滚动区刷新把状态行卷进正文。输入行沿正文自然流动，禁止在 readLine 前手写 cursor_address 跳到底部。生产 inline 正文经 UTF-8 WriterOutputStream 写入 terminal.writer，与状态区共用输出通道；禁止混用 System.out。状态行保留右侧一列避免自动换行。`ctx` 表示上下文估算，`in/out/cache` 表示最近任务调用统计。
 - 普通任务和斜杠命令提交后，`Main` 会把本轮原始输入以暗色整行块写回 transcript：输入态左提示仍是 `* `，提交回显左提示改为 `>`；单行输入只占一行，不额外追加空白行。普通任务随后再展开 MCP resource / 本地 `@path` 并进入 Agent；不要只依赖 JLine 提交行残留，否则 activity 重绘或 dock 刷新可能让用户输入从可见历史里消失。`/clear` 清空 conversationHistory、shortTermMemory、待注入 Skill buffer，并重建不含上一轮检索记忆的 system prompt；长期记忆保留。`/compact` 会手动压缩当前 ReAct conversationHistory，不等待上下文阈值触发，保留最近 1 个 user 轮次和 tool_call/tool_result 边界。
 - ReAct LLM 调用期间默认只显示紧凑 `Thinking...` activity，Ctrl+T 可切换实时预览。content 或 tool call 开始前清掉 live 区，把 reasoning 保存到最近思考存储并输出摘要；输入期 Ctrl+T 查看详情。普通无 Markdown 标记的长段落允许在换行前输出，结构化 Markdown 仍按行解析。
 - 交互期输出应优先走 `Renderer.stream()`；`Main`、`PlanExecuteAgent`、`Planner`、`AgentOrchestrator` 都支持把输出流接到 inline renderer，避免直接争抢 stdout。`CodeIndex` 的索引进度通过 `ProgressListener` 注入，`/index` 应绑定到当前 renderer 输出流。

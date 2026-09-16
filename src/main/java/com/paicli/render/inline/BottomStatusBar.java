@@ -192,7 +192,7 @@ public final class BottomStatusBar implements AutoCloseable {
         sb.append("  ").append(value.trim());
     }
 
-    private static StatusInfo mergeEnvironment(StatusInfo next, StatusInfo previous) {
+    static StatusInfo mergeEnvironment(StatusInfo next, StatusInfo previous) {
         if (next == null || previous == null) {
             return next;
         }
@@ -208,7 +208,7 @@ public final class BottomStatusBar implements AutoCloseable {
         return next.withEnvironment(mcp, skill);
     }
 
-    static List<AttributedString> formatStatusLines(StatusInfo info, int cols) {
+    public static List<AttributedString> formatStatusLines(StatusInfo info, int cols) {
         return List.of(
                 formatStatusLineAttributed(info, cols),
                 formatFooterLineAttributed(info, cols)
