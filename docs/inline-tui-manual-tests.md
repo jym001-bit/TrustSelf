@@ -320,7 +320,7 @@ TERM=dumb java -jar target/paicli-1.0-SNAPSHOT.jar
 
 **已知小瑕疵**：少数终端 resize 后可能出现一次轻微重绘闪烁，继续输入或下一次状态更新会恢复。
 
-**IDE 内嵌终端**：在 JetBrains/JediTerm、VS Code 或 Cursor 中，状态区应直接跟在输入框下方；提交后整个输入显示区一次性消失，运行期间不能在正文中残留或复制 `running`、`MCP servers`、`ctx` 等状态片段。
+**IDE 内嵌终端**：在 JetBrains/JediTerm、VS Code 或 Cursor 中，状态区应直接跟在当前输入框下方；提交后整个输入显示区一次性消失，历史对话中不能残留或复制 `running`、`MCP servers`、`skills`、`ctx` 等状态片段，也不能在已提交输入的最右侧残留 right prompt 的字符。
 
 ---
 

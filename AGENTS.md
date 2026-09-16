@@ -19,7 +19,7 @@
 
 ## 运行前提
 
-- inline thinking 默认折叠：ReAct 运行期 Ctrl+T 切换 activity 预览；输入期 Ctrl+T / Ctrl+O 通过 SlashMenuLineReader 的 JLine post 区打开思考/工具详情，PgUp/PgDn 滚动，禁止用 printAbove 重打整轮 transcript 来模拟折叠。Plan/Team 通过 ThinkingChat 分流 reasoning，保留模型响应原文。最近思考跨轮保留至 20 段/约 20 万字符；运行期普通键入缓存在下一输入框，不自动提交。输入提交后的编辑行由 JLine `ERASE_LINE_ON_FINISH` 清理，禁止手写光标上移清行。JetBrains/JediTerm 与 VS Code/Cursor 内嵌终端禁用 JLine `Status` 滚动保留区，状态行改由同一个 `LineReader.post` 管理。
+- inline thinking 默认折叠：ReAct 运行期 Ctrl+T 切换 activity 预览；输入期 Ctrl+T / Ctrl+O 通过 SlashMenuLineReader 的 JLine post 区打开思考/工具详情，PgUp/PgDn 滚动，禁止用 printAbove 重打整轮 transcript 来模拟折叠。Plan/Team 通过 ThinkingChat 分流 reasoning，保留模型响应原文。最近思考跨轮保留至 20 段/约 20 万字符；运行期普通键入缓存在下一输入框，不自动提交。输入提交后的编辑行由 JLine `ERASE_LINE_ON_FINISH` 清理，清理重绘必须临时隐藏 post footer 和 right prompt，禁止把 MCP/Skill 状态或 `message / @path / @image` 留进 transcript。JetBrains/JediTerm 与 VS Code/Cursor 内嵌终端禁用 JLine `Status` 滚动保留区，状态行改由同一个 `LineReader.post` 管理。
 
 - JLine JNI 在新版 JDK 上需要启用 native access。Windows bat 与 JAR 的 `Enable-Native-Access: ALL-UNNAMED` 清单项必须保留，否则可能降级为 dumb，导致 slash 菜单失效。`tools/TerminalProbe.java` 可在不调用模型的情况下检查 provider 与终端类型。
 

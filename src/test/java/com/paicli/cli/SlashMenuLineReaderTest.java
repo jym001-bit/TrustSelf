@@ -8,9 +8,40 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SlashMenuLineReaderTest {
+    @Test
+    void acceptedInputCleanupDoesNotReinsertFooterOrRightPrompt() throws Exception {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try (var terminal = TerminalBuilder.builder().system(false).type("xterm")
+                .streams(new ByteArrayInputStream(new byte[0]), output)
+                .encoding(StandardCharsets.UTF_8).build()) {
+            terminal.setSize(new Size(80, 24));
+            var reader = new SlashMenuLineReader(terminal);
+            reader.option(org.jline.reader.LineReader.Option.ERASE_LINE_ON_FINISH, true);
+            reader.setRightPrompt("message / @path / @image");
+            AtomicInteger footerRequests = new AtomicInteger();
+            reader.setFooterLines(() -> {
+                footerRequests.incrementAndGet();
+                return List.of(new AttributedString("0/1 MCP servers · 2 skills"));
+            });
+            reader.getBuffer().write("hello");
+            reader.redisplay();
+            int requestsBeforeCleanup = footerRequests.get();
+
+            output.reset();
+            reader.cleanup();
+
+            assertEquals(requestsBeforeCleanup, footerRequests.get(),
+                    "cleanup redraw must bypass the transient footer supplier");
+            String cleanupOutput = output.toString(StandardCharsets.UTF_8);
+            assertFalse(cleanupOutput.contains("MCP servers"), cleanupOutput);
+            assertFalse(cleanupOutput.contains("@image"), cleanupOutput);
+        }
+    }
+
     @Test
     void footerIsClippedAndOwnedByTheLineReaderDisplay() throws Exception {
         ByteArrayOutputStream output = new ByteArrayOutputStream();

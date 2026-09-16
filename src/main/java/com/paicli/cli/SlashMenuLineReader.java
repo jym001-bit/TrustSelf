@@ -20,6 +20,7 @@ public final class SlashMenuLineReader extends LineReaderImpl {
     private Supplier<String> details = () -> "";
     private Supplier<List<AttributedString>> footerLines = List::of;
     private int detailOffset;
+    private boolean cleaningUp;
 
     public void setDetails(Supplier<String> details) {
         this.details = Objects.requireNonNullElse(details, () -> "");
@@ -126,6 +127,10 @@ public final class SlashMenuLineReader extends LineReaderImpl {
 
     @Override
     protected void redisplay(boolean flush) {
+        if (cleaningUp) {
+            super.redisplay(flush);
+            return;
+        }
         List<Main.SlashCommandHint> choices = menuChoices();
         String detailText = details.get();
         List<AttributedString> currentFooter = safeFooterLines();
@@ -145,6 +150,24 @@ public final class SlashMenuLineReader extends LineReaderImpl {
         } finally {
             post = previousPost;
             setAutosuggestion(previousSuggestion);
+        }
+    }
+
+    /**
+     * JLine's erase-on-finish cleanup calls redisplay after clearing the editable
+     * buffer. Suppress every transient post line and the right prompt for that
+     * redraw so they are removed instead of becoming transcript text.
+     */
+    @Override
+    protected void cleanup() {
+        AttributedString savedRightPrompt = rightPrompt;
+        cleaningUp = true;
+        rightPrompt = new AttributedString("");
+        try {
+            super.cleanup();
+        } finally {
+            rightPrompt = savedRightPrompt;
+            cleaningUp = false;
         }
     }
 
