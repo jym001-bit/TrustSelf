@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class WebFetcher {
 
     private static final Logger log = LoggerFactory.getLogger(WebFetcher.class);
-    public static final int DEFAULT_MAX_BYTES = 5 * 1024 * 1024;
+    public static final int DEFAULT_MAX_BYTES = 5 * 1024 * 1024;//5MiB 控制一下
     private static final long DEFAULT_TIMEOUT_SECONDS = 30L;
 
     private final OkHttpClient httpClient;
@@ -54,6 +54,7 @@ public class WebFetcher {
     }
 
     public RawResponse fetch(String url) throws IOException {
+        //构造GET
         Request request = new Request.Builder()
                 .url(url)
                 .header("Accept", "text/html,application/xhtml+xml,*/*;q=0.9")
@@ -72,11 +73,11 @@ public class WebFetcher {
             if (body == null) {
                 throw new IOException("响应体为空");
             }
-
+            //确定字符编码
             Charset charset = resolveCharset(response, body);
-            byte[] bytes = readBounded(body.byteStream());
+            byte[] bytes = readBounded(body.byteStream());//内容转成字节，控制读入频率,缓存区分段读取相应
             boolean truncated = bytes.length >= maxBytes;
-            String text = new String(bytes, charset);
+            String text = new String(bytes, charset);//String
             String contentType = response.header("Content-Type", "");
             return new RawResponse(url, text, contentType, charset.name(), truncated);
         }
@@ -94,7 +95,7 @@ public class WebFetcher {
 
     private byte[] readBounded(InputStream input) throws IOException {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        byte[] buffer = new byte[8192];
+        byte[] buffer = new byte[8192];//临时缓冲区
         int total = 0;
         int n;
         while ((n = input.read(buffer)) != -1) {

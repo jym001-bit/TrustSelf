@@ -864,7 +864,7 @@ public class ToolRegistry {
         }
         try {
             List<SearchResult> results = provider.search(query.trim(), topK);
-            return formatSearchResults(provider.name(), query, results);
+            return formatSearchResults(provider.name(), query, results);//将Java对象整理成格式文本，
         } catch (Exception e) {
             return "搜索失败 (" + provider.name() + "): " + e.getMessage();
         }
@@ -933,7 +933,7 @@ public class ToolRegistry {
 
         try {
             WebFetcher.RawResponse raw = webFetcher().fetch(url.trim());
-            HtmlExtractor.Extracted extracted = htmlExtractor().extract(raw.body(), raw.url());
+            HtmlExtractor.Extracted extracted = htmlExtractor().extract(raw.body(), raw.url());//提取正文
             String markdown = extracted.markdown();
             int originalLength = markdown.length();
             boolean truncated = false;

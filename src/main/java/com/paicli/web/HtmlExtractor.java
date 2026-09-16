@@ -40,20 +40,20 @@ public class HtmlExtractor {
             "related", "recommend", "comment", "share", "social", "breadcrumb",
             "sidebar", "promo", "cookie", "footer", "navigation"
     );
-
+    //从HTML 提取 正文
     public Extracted extract(String html, String baseUrl) {
-        Document doc = Jsoup.parse(html, baseUrl == null ? "" : baseUrl, Parser.htmlParser());
+        Document doc = Jsoup.parse(html, baseUrl == null ? "" : baseUrl, Parser.htmlParser());//解析成一个树的形式
         String title = pickTitle(doc);
 
-        cleanNoise(doc);
-        Element main = pickMainElement(doc);
+        cleanNoise(doc);//清理噪声
+        Element main = pickMainElement(doc);//剩下的内容提取正文
 
         if (main == null) {
             return new Extracted(title, "");
         }
 
         StringBuilder out = new StringBuilder();
-        renderChildren(main, out, false);
+        renderChildren(main, out, false);//遍历DOM树
         String markdown = collapseBlankLines(out.toString()).trim();
         return new Extracted(title, markdown);
     }
@@ -100,7 +100,7 @@ public class HtmlExtractor {
         }
         return best;
     }
-
+    //猜测正文 文本多 链接少
     private double score(Element el) {
         String text = el.text();
         int textLen = text.length();
@@ -123,6 +123,7 @@ public class HtmlExtractor {
                     out.append(txt);
                 }
             } else if (child instanceof Element el) {
+                //按标签处理 转成MarkDown
                 renderElement(el, out, inListContext);
             } else if (child instanceof Comment) {
                 // 忽略

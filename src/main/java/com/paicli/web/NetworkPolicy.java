@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NetworkPolicy {
 
     private static final Set<String> ALLOWED_SCHEMES = Set.of("http", "https");
-    private static final long DEFAULT_WINDOW_MILLIS = 60_000L;
-    private static final int DEFAULT_MAX_PER_WINDOW = 30;
+    private static final long DEFAULT_WINDOW_MILLIS = 60_000L;//60s
+    private static final int DEFAULT_MAX_PER_WINDOW = 30;//30
 
     private final long windowMillis;
     private final int maxPerWindow;
@@ -48,7 +48,7 @@ public class NetworkPolicy {
         }
         URI uri;
         try {
-            uri = URI.create(url.trim());
+            uri = URI.create(url.trim());//解析 这个URI的各个参数
         } catch (IllegalArgumentException e) {
             return "URL 格式非法: " + e.getMessage();
         }
@@ -57,7 +57,7 @@ public class NetworkPolicy {
         if (scheme == null) {
             return "URL 缺少 scheme（需 http 或 https）";
         }
-        scheme = scheme.toLowerCase(Locale.ROOT);
+        scheme = scheme.toLowerCase(Locale.ROOT);//统一标准化
         if (!ALLOWED_SCHEMES.contains(scheme)) {
             return "禁止的 scheme: " + scheme + "（仅允许 http、https）";
         }

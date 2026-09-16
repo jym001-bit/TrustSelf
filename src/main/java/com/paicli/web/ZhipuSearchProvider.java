@@ -100,13 +100,13 @@ public class ZhipuSearchProvider implements SearchProvider {
         }
         int count = topK > 0 ? Math.min(topK, 50) : 10;
 
-        ObjectNode payload = MAPPER.createObjectNode();
+        ObjectNode payload = MAPPER.createObjectNode();//搜索参数
         payload.put("search_engine", searchEngine);
         payload.put("search_query", query);
         payload.put("count", count);
         payload.put("content_size", "medium");
 
-        Request request = new Request.Builder()
+        Request request = new Request.Builder()//构建HTTP
                 .url(ENDPOINT)
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/json")
@@ -123,13 +123,13 @@ public class ZhipuSearchProvider implements SearchProvider {
                 throw new IOException("智谱搜索请求失败 (HTTP " + response.code() + "): "
                         + truncate(body, 200));
             }
-            return parse(body, count);
+            return parse(body, count);//把JSON转成Java对象
         }
     }
 
     private List<SearchResult> parse(String json, int maxResults) throws IOException {
         JsonNode root = MAPPER.readTree(json);
-        JsonNode arr = root.path("search_result");
+        JsonNode arr = root.path("search_result");//获取这个字段的相应数组
         List<SearchResult> results = new ArrayList<>();
         if (arr.isArray()) {
             int position = 0;
