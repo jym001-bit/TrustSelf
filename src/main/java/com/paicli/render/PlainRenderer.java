@@ -34,6 +34,15 @@ public final class PlainRenderer implements Renderer {
         this(System.out, new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)));
     }
 
+    /**
+     * 创建写入指定输出流的纯文本渲染器。
+     *
+     * <p>后台/headless Agent 可传入独立或静默输出流，避免与交互式 JLine 争抢终端。
+     */
+    public PlainRenderer(PrintStream out) {
+        this(out, new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)));
+    }
+
     PlainRenderer(PrintStream out, BufferedReader in) {
         this.out = out;
         this.in = in;

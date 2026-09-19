@@ -16,6 +16,7 @@
   - `canceled`
 - Worker Pool：默认 2 个后台 worker，可用 `PAICLI_TASK_WORKERS` 或 `-Dpaicli.task.workers` 覆盖
 - 进程启动时把上次残留的 `running` 任务恢复为 `enqueued`
+- headless ReAct Agent 使用独立静默输出流，不向当前交互终端打印流式内容；最终回答持久化到任务记录
 - CLI 命令：
   - `/task` 或 `/task list [N]`
   - `/task add <任务内容>`

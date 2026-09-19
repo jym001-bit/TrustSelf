@@ -217,6 +217,7 @@ v16.1 抽出 `Renderer` 接口 + 三个实现：
 - 任务生命周期：`enqueued -> running -> completed / failed / canceled`
 - `/task`、`/task add <任务内容>`、`/task cancel <task_id>`、`/task log <task_id>` 提供 CLI 闭环
 - Worker Pool 默认 2 个后台 worker，可通过 `PAICLI_TASK_WORKERS` 调整
+- 后台 headless ReAct Agent 使用独立静默输出流，运行期间不会抢占当前 JLine 输入区；最终回答写回任务记录，通过 `/task log <task_id>` 查看
 - `java -jar target/paicli-1.0-SNAPSHOT.jar serve --http --port 8080` 启动 localhost Runtime API
 - Runtime API 端点：`POST /v1/threads`、`POST /v1/threads/{id}/turns`、`GET /v1/threads/{id}/events`
 - Runtime API 强制要求 `PAICLI_RUNTIME_API_KEY` 或 `-Dpaicli.runtime.api.key`

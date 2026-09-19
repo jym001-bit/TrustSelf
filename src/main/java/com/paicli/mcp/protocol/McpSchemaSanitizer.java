@@ -22,8 +22,8 @@ public final class McpSchemaSanitizer {
             fallback.putObject("properties");
             return fallback;
         }
-        JsonNode copy = schema.deepCopy();
-        JsonNode cleaned = clean(copy);
+        JsonNode copy = schema.deepCopy();//复制一份
+        JsonNode cleaned = clean(copy);//清洗
         if (!cleaned.isObject()) {
             ObjectNode fallback = MAPPER.createObjectNode();
             fallback.put("type", "object");

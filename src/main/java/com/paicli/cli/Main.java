@@ -22,6 +22,7 @@ import com.paicli.memory.MemoryEntry;
 import com.paicli.render.Renderer;
 import com.paicli.render.RendererFactory;
 import com.paicli.render.StatusInfo;
+import com.paicli.render.PlainRenderer;
 import com.paicli.render.inline.InlineRenderer;
 import com.paicli.image.ClipboardImage;
 import com.paicli.mcp.McpServer;
@@ -75,7 +76,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -297,6 +300,7 @@ public class Main {
                 if (!bootstrapResult.message().isBlank()) {
                     startupNote = bootstrapResult.message();
                 }
+                //开始MCP启动
                 mcpServerManager.loadConfiguredServers();
                 mcpServerManager.startAll(ui, mcpStartupWait());
                 Runtime.getRuntime().addShutdownHook(new Thread(mcpServerManager::close, "paicli-mcp-shutdown"));
@@ -921,7 +925,14 @@ public class Main {
         ToolRegistry registry = new ToolRegistry();
         registry.setProjectPath(Path.of(".").toAbsolutePath().normalize().toString());
         Agent agent = new Agent(llmClient, registry);
-        return agent.run(prompt);
+        // 后台任务不能把流式输出直接写进当前 CLI 的 System.out，否则会与 JLine
+        // 输入区争抢光标，表现为输入框消失或状态栏错位。最终回答由 run() 返回并持久化。
+        try (PrintStream sink = new PrintStream(
+                OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8)) {
+            agent.setRenderer(new PlainRenderer(sink));
+            agent.setReturnFinalResponseWhenStreamed(true);
+            return agent.run(prompt);
+        }
     }
 
     private static DurableTaskManager openTaskManager(AtomicReference<LlmClient> llmClientRef) {
