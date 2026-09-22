@@ -114,7 +114,7 @@ public class ConversationMemory implements Memory {
     /**
      * 获取已压缩淘汰的记忆摘要
      */
-    public List<MemoryEntry> getCompressedSummaries() {
+    public List<MemoryEntry> getCompressedSummaries()   {
         return Collections.unmodifiableList(compressedSummaries);
     }
 

@@ -202,9 +202,9 @@ public class DurableTaskManager implements Closeable {
             }
         }
     }
-
+    //这个只是对于这个任务的争取，在领取完成任务，释放锁资源
     private synchronized DurableTask claimNext() throws SQLException {
-        connection.setAutoCommit(false);
+        connection.setAutoCommit(false);//开启事务
         try {
             DurableTask task = null;
             try (PreparedStatement select = connection.prepareStatement("""
@@ -240,7 +240,7 @@ public class DurableTaskManager implements Closeable {
                     return null;
                 }
             }
-            connection.commit();
+            connection.commit();//领取成功
             return find(task.id()).orElse(task);
         } catch (SQLException e) {
             connection.rollback();
